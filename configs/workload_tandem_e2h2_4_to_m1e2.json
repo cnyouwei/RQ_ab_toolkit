@@ -1,0 +1,55 @@
+{
+  "simulation": {
+    "warmup_time": 100000.0,
+    "sample_time": 1000000.0,
+    "replications": 100,
+    "threads": 0,
+    "seed": 123456789,
+    "normalize_service_mean_to_one": true
+  },
+  "model": {
+    "name": "E_2/H_2(4)/1 -> ./M/1+E_2 example",
+    "alias": "tandem_e2h2_4_to_m1e2",
+    "queue1": {
+      "traffic_intensity": 0.9,
+      "arrival": {
+        "distribution": {
+          "family": "erlang_k",
+          "params": {
+            "k": 2,
+            "rate": 2.0
+          }
+        }
+      },
+      "service": {
+        "distribution": {
+          "family": "hyperexponential2",
+          "params": {
+            "p": 0.8872983346207416,
+            "rate1": 1.7745966692414832,
+            "rate2": 0.22540333075851682
+          }
+        }
+      }
+    },
+    "queue2": {
+      "service": {
+        "distribution": {
+          "family": "exponential",
+          "params": {
+            "rate": 1.0
+          }
+        }
+      },
+      "patience": {
+        "distribution": {
+          "family": "erlang_k",
+          "params": {
+            "k": 2,
+            "rate": 2.0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "time_grid": {
+    "t_min": 0.01,
+    "t_max": 100000000.0,
+    "n_t": 600
+  },
+  "alpha": {
+    "indices": [0, 3, 6, 9, 12],
+    "base": 2.0
+  },
+  "simulation": {
+    "warmup_time": 10000000.0,
+    "sample_time": 300000000.0,
+    "tau": 0.1,
+    "max_level": 23,
+    "min_windows_per_t": 100,
+    "n_tau_shifts": 5,
+    "seed": 123456789,
+    "save_event_trace": false,
+    "threads": 1
+  },
+  "plot": {
+    "title": "Approximation of Effective IDW for $M/M/1+M$",
+    "ncols": 1,
+    "figsize": [6, 4],
+    "dpi": 180,
+    "show": false,
+    "curve_label_template": "$i={i},\\ \\alpha=2^{{-{i}}}$"
+  },
+  "simulation_overlay": {
+    "enabled": true,
+    "results_dir": "../results",
+    "warn_missing": true
+  },
+  "output": {
+    "path": "../results/idw_effective_mm1m.pdf"
+  },
+  "models": [
+    {
+      "name": "$M/M/1+M$",
+      "w_table": "../results/w_table_matrix_k1.csv",
+      "arrival": {
+        "distribution": {
+          "family": "exponential",
+          "params": {
+            "rate": 1.0
+          }
+        }
+      },
+      "system": {
+        "c": 2.0
+      },
+      "service": {
+        "distribution": {
+          "family": "exponential",
+          "params": {
+            "rate": 1.0
+          }
+        }
+      },
+      "patience": {
+        "distribution": {
+          "family": "erlang_k",
+          "params": {
+            "k": 1,
+            "rate": 1.0
+          }
+        }
+      },
+      "scaling": {
+        "k": 1
+      }
+    }
+  ]
+}

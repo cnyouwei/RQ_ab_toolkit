@@ -1,0 +1,62 @@
+{
+  "alpha": {
+    "indices": [0,3,6,9,12],
+    "base": 2.0
+  },
+  "simulation": {
+    "warmup_time": 1000000.0,
+    "sample_time": 10000000.0,
+    "tau": 0.1,
+    "max_level": 23,
+    "min_windows_per_t": 100,
+    "n_tau_shifts": 5,
+    "seed": 123456789,
+    "save_event_trace": false,
+    "threads": 1
+  },
+  "output": {
+    "path": "../results/idw_effective_e2m1h2_4.pdf"
+  },
+  "simulation_overlay": {
+    "results_dir": "../results"
+  },
+  "models": [
+    {
+      "name": "E2/M/1+H2(4)",
+      "w_table": "../results/w_table_matrix_k1.csv",
+      "arrival": {
+        "distribution": {
+          "family": "erlang_k",
+          "params": {
+            "k": 2,
+            "rate": 2.0
+          }
+        }
+      },
+      "system": {
+        "c": 2.0
+      },
+      "service": {
+        "distribution": {
+          "family": "exponential",
+          "params": {
+            "rate": 1.0
+          }
+        }
+      },
+      "patience": {
+        "distribution": {
+          "family": "hyperexponential2",
+          "params": {
+            "p": 0.8872983346207416,
+            "rate1": 1.7745966692414832,
+            "rate2": 0.22540333075851682
+          }
+        }
+      },
+      "scaling": {
+        "k": 1
+      }
+    }
+  ]
+}

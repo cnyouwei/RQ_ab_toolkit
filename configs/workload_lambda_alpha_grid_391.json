@@ -1,0 +1,3139 @@
+{
+  "metadata": {
+    "lambda_count": 23,
+    "alpha_count": 17,
+    "tuple_count": 391,
+    "lambda_spec": "{1-2^-k, k=1..10} U {1+2^-k, k=10..-2}",
+    "alpha_spec": "{2^-k, k=-3..13}"
+  },
+  "tuples": [
+    {
+      "tuple_id": 1,
+      "lambda": 0.5,
+      "alpha": 8.0,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 2,
+      "lambda": 0.5,
+      "alpha": 4.0,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 3,
+      "lambda": 0.5,
+      "alpha": 2.0,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 4,
+      "lambda": 0.5,
+      "alpha": 1.0,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 5,
+      "lambda": 0.5,
+      "alpha": 0.5,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 6,
+      "lambda": 0.5,
+      "alpha": 0.25,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 7,
+      "lambda": 0.5,
+      "alpha": 0.125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 8,
+      "lambda": 0.5,
+      "alpha": 0.0625,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 9,
+      "lambda": 0.5,
+      "alpha": 0.03125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 10,
+      "lambda": 0.5,
+      "alpha": 0.015625,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 11,
+      "lambda": 0.5,
+      "alpha": 0.0078125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 12,
+      "lambda": 0.5,
+      "alpha": 0.00390625,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 13,
+      "lambda": 0.5,
+      "alpha": 0.001953125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 14,
+      "lambda": 0.5,
+      "alpha": 0.0009765625,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 15,
+      "lambda": 0.5,
+      "alpha": 0.00048828125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 16,
+      "lambda": 0.5,
+      "alpha": 0.000244140625,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 17,
+      "lambda": 0.5,
+      "alpha": 0.0001220703125,
+      "lambda_k": 1,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 18,
+      "lambda": 0.75,
+      "alpha": 8.0,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 19,
+      "lambda": 0.75,
+      "alpha": 4.0,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 20,
+      "lambda": 0.75,
+      "alpha": 2.0,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 21,
+      "lambda": 0.75,
+      "alpha": 1.0,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 22,
+      "lambda": 0.75,
+      "alpha": 0.5,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 23,
+      "lambda": 0.75,
+      "alpha": 0.25,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 24,
+      "lambda": 0.75,
+      "alpha": 0.125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 25,
+      "lambda": 0.75,
+      "alpha": 0.0625,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 26,
+      "lambda": 0.75,
+      "alpha": 0.03125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 27,
+      "lambda": 0.75,
+      "alpha": 0.015625,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 28,
+      "lambda": 0.75,
+      "alpha": 0.0078125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 29,
+      "lambda": 0.75,
+      "alpha": 0.00390625,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 30,
+      "lambda": 0.75,
+      "alpha": 0.001953125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 31,
+      "lambda": 0.75,
+      "alpha": 0.0009765625,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 32,
+      "lambda": 0.75,
+      "alpha": 0.00048828125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 33,
+      "lambda": 0.75,
+      "alpha": 0.000244140625,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 34,
+      "lambda": 0.75,
+      "alpha": 0.0001220703125,
+      "lambda_k": 2,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 35,
+      "lambda": 0.875,
+      "alpha": 8.0,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 36,
+      "lambda": 0.875,
+      "alpha": 4.0,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 37,
+      "lambda": 0.875,
+      "alpha": 2.0,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 38,
+      "lambda": 0.875,
+      "alpha": 1.0,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 39,
+      "lambda": 0.875,
+      "alpha": 0.5,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 40,
+      "lambda": 0.875,
+      "alpha": 0.25,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 41,
+      "lambda": 0.875,
+      "alpha": 0.125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 42,
+      "lambda": 0.875,
+      "alpha": 0.0625,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 43,
+      "lambda": 0.875,
+      "alpha": 0.03125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 44,
+      "lambda": 0.875,
+      "alpha": 0.015625,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 45,
+      "lambda": 0.875,
+      "alpha": 0.0078125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 46,
+      "lambda": 0.875,
+      "alpha": 0.00390625,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 47,
+      "lambda": 0.875,
+      "alpha": 0.001953125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 48,
+      "lambda": 0.875,
+      "alpha": 0.0009765625,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 49,
+      "lambda": 0.875,
+      "alpha": 0.00048828125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 50,
+      "lambda": 0.875,
+      "alpha": 0.000244140625,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 51,
+      "lambda": 0.875,
+      "alpha": 0.0001220703125,
+      "lambda_k": 3,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 52,
+      "lambda": 0.9375,
+      "alpha": 8.0,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 53,
+      "lambda": 0.9375,
+      "alpha": 4.0,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 54,
+      "lambda": 0.9375,
+      "alpha": 2.0,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 55,
+      "lambda": 0.9375,
+      "alpha": 1.0,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 56,
+      "lambda": 0.9375,
+      "alpha": 0.5,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 57,
+      "lambda": 0.9375,
+      "alpha": 0.25,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 58,
+      "lambda": 0.9375,
+      "alpha": 0.125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 59,
+      "lambda": 0.9375,
+      "alpha": 0.0625,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 60,
+      "lambda": 0.9375,
+      "alpha": 0.03125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 61,
+      "lambda": 0.9375,
+      "alpha": 0.015625,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 62,
+      "lambda": 0.9375,
+      "alpha": 0.0078125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 63,
+      "lambda": 0.9375,
+      "alpha": 0.00390625,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 64,
+      "lambda": 0.9375,
+      "alpha": 0.001953125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 65,
+      "lambda": 0.9375,
+      "alpha": 0.0009765625,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 66,
+      "lambda": 0.9375,
+      "alpha": 0.00048828125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 67,
+      "lambda": 0.9375,
+      "alpha": 0.000244140625,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 68,
+      "lambda": 0.9375,
+      "alpha": 0.0001220703125,
+      "lambda_k": 4,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 69,
+      "lambda": 0.96875,
+      "alpha": 8.0,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 70,
+      "lambda": 0.96875,
+      "alpha": 4.0,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 71,
+      "lambda": 0.96875,
+      "alpha": 2.0,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 72,
+      "lambda": 0.96875,
+      "alpha": 1.0,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 73,
+      "lambda": 0.96875,
+      "alpha": 0.5,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 74,
+      "lambda": 0.96875,
+      "alpha": 0.25,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 75,
+      "lambda": 0.96875,
+      "alpha": 0.125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 76,
+      "lambda": 0.96875,
+      "alpha": 0.0625,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 77,
+      "lambda": 0.96875,
+      "alpha": 0.03125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 78,
+      "lambda": 0.96875,
+      "alpha": 0.015625,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 79,
+      "lambda": 0.96875,
+      "alpha": 0.0078125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 80,
+      "lambda": 0.96875,
+      "alpha": 0.00390625,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 81,
+      "lambda": 0.96875,
+      "alpha": 0.001953125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 82,
+      "lambda": 0.96875,
+      "alpha": 0.0009765625,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 83,
+      "lambda": 0.96875,
+      "alpha": 0.00048828125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 84,
+      "lambda": 0.96875,
+      "alpha": 0.000244140625,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 85,
+      "lambda": 0.96875,
+      "alpha": 0.0001220703125,
+      "lambda_k": 5,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 86,
+      "lambda": 0.984375,
+      "alpha": 8.0,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 87,
+      "lambda": 0.984375,
+      "alpha": 4.0,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 88,
+      "lambda": 0.984375,
+      "alpha": 2.0,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 89,
+      "lambda": 0.984375,
+      "alpha": 1.0,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 90,
+      "lambda": 0.984375,
+      "alpha": 0.5,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 91,
+      "lambda": 0.984375,
+      "alpha": 0.25,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 92,
+      "lambda": 0.984375,
+      "alpha": 0.125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 93,
+      "lambda": 0.984375,
+      "alpha": 0.0625,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 94,
+      "lambda": 0.984375,
+      "alpha": 0.03125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 95,
+      "lambda": 0.984375,
+      "alpha": 0.015625,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 96,
+      "lambda": 0.984375,
+      "alpha": 0.0078125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 97,
+      "lambda": 0.984375,
+      "alpha": 0.00390625,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 98,
+      "lambda": 0.984375,
+      "alpha": 0.001953125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 99,
+      "lambda": 0.984375,
+      "alpha": 0.0009765625,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 100,
+      "lambda": 0.984375,
+      "alpha": 0.00048828125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 101,
+      "lambda": 0.984375,
+      "alpha": 0.000244140625,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 102,
+      "lambda": 0.984375,
+      "alpha": 0.0001220703125,
+      "lambda_k": 6,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 103,
+      "lambda": 0.9921875,
+      "alpha": 8.0,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 104,
+      "lambda": 0.9921875,
+      "alpha": 4.0,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 105,
+      "lambda": 0.9921875,
+      "alpha": 2.0,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 106,
+      "lambda": 0.9921875,
+      "alpha": 1.0,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 107,
+      "lambda": 0.9921875,
+      "alpha": 0.5,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 108,
+      "lambda": 0.9921875,
+      "alpha": 0.25,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 109,
+      "lambda": 0.9921875,
+      "alpha": 0.125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 110,
+      "lambda": 0.9921875,
+      "alpha": 0.0625,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 111,
+      "lambda": 0.9921875,
+      "alpha": 0.03125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 112,
+      "lambda": 0.9921875,
+      "alpha": 0.015625,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 113,
+      "lambda": 0.9921875,
+      "alpha": 0.0078125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 114,
+      "lambda": 0.9921875,
+      "alpha": 0.00390625,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 115,
+      "lambda": 0.9921875,
+      "alpha": 0.001953125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 116,
+      "lambda": 0.9921875,
+      "alpha": 0.0009765625,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 117,
+      "lambda": 0.9921875,
+      "alpha": 0.00048828125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 118,
+      "lambda": 0.9921875,
+      "alpha": 0.000244140625,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 119,
+      "lambda": 0.9921875,
+      "alpha": 0.0001220703125,
+      "lambda_k": 7,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 120,
+      "lambda": 0.99609375,
+      "alpha": 8.0,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 121,
+      "lambda": 0.99609375,
+      "alpha": 4.0,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 122,
+      "lambda": 0.99609375,
+      "alpha": 2.0,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 123,
+      "lambda": 0.99609375,
+      "alpha": 1.0,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 124,
+      "lambda": 0.99609375,
+      "alpha": 0.5,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 125,
+      "lambda": 0.99609375,
+      "alpha": 0.25,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 126,
+      "lambda": 0.99609375,
+      "alpha": 0.125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 127,
+      "lambda": 0.99609375,
+      "alpha": 0.0625,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 128,
+      "lambda": 0.99609375,
+      "alpha": 0.03125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 129,
+      "lambda": 0.99609375,
+      "alpha": 0.015625,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 130,
+      "lambda": 0.99609375,
+      "alpha": 0.0078125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 131,
+      "lambda": 0.99609375,
+      "alpha": 0.00390625,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 132,
+      "lambda": 0.99609375,
+      "alpha": 0.001953125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 133,
+      "lambda": 0.99609375,
+      "alpha": 0.0009765625,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 134,
+      "lambda": 0.99609375,
+      "alpha": 0.00048828125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 135,
+      "lambda": 0.99609375,
+      "alpha": 0.000244140625,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 136,
+      "lambda": 0.99609375,
+      "alpha": 0.0001220703125,
+      "lambda_k": 8,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 137,
+      "lambda": 0.998046875,
+      "alpha": 8.0,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 138,
+      "lambda": 0.998046875,
+      "alpha": 4.0,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 139,
+      "lambda": 0.998046875,
+      "alpha": 2.0,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 140,
+      "lambda": 0.998046875,
+      "alpha": 1.0,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 141,
+      "lambda": 0.998046875,
+      "alpha": 0.5,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 142,
+      "lambda": 0.998046875,
+      "alpha": 0.25,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 143,
+      "lambda": 0.998046875,
+      "alpha": 0.125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 144,
+      "lambda": 0.998046875,
+      "alpha": 0.0625,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 145,
+      "lambda": 0.998046875,
+      "alpha": 0.03125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 146,
+      "lambda": 0.998046875,
+      "alpha": 0.015625,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 147,
+      "lambda": 0.998046875,
+      "alpha": 0.0078125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 148,
+      "lambda": 0.998046875,
+      "alpha": 0.00390625,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 149,
+      "lambda": 0.998046875,
+      "alpha": 0.001953125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 150,
+      "lambda": 0.998046875,
+      "alpha": 0.0009765625,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 151,
+      "lambda": 0.998046875,
+      "alpha": 0.00048828125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 152,
+      "lambda": 0.998046875,
+      "alpha": 0.000244140625,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 153,
+      "lambda": 0.998046875,
+      "alpha": 0.0001220703125,
+      "lambda_k": 9,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 154,
+      "lambda": 0.9990234375,
+      "alpha": 8.0,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 155,
+      "lambda": 0.9990234375,
+      "alpha": 4.0,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 156,
+      "lambda": 0.9990234375,
+      "alpha": 2.0,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 157,
+      "lambda": 0.9990234375,
+      "alpha": 1.0,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 158,
+      "lambda": 0.9990234375,
+      "alpha": 0.5,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 159,
+      "lambda": 0.9990234375,
+      "alpha": 0.25,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 160,
+      "lambda": 0.9990234375,
+      "alpha": 0.125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 161,
+      "lambda": 0.9990234375,
+      "alpha": 0.0625,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 162,
+      "lambda": 0.9990234375,
+      "alpha": 0.03125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 163,
+      "lambda": 0.9990234375,
+      "alpha": 0.015625,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 164,
+      "lambda": 0.9990234375,
+      "alpha": 0.0078125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 165,
+      "lambda": 0.9990234375,
+      "alpha": 0.00390625,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 166,
+      "lambda": 0.9990234375,
+      "alpha": 0.001953125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 167,
+      "lambda": 0.9990234375,
+      "alpha": 0.0009765625,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 168,
+      "lambda": 0.9990234375,
+      "alpha": 0.00048828125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 169,
+      "lambda": 0.9990234375,
+      "alpha": 0.000244140625,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 170,
+      "lambda": 0.9990234375,
+      "alpha": 0.0001220703125,
+      "lambda_k": 10,
+      "lambda_form": "1-2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 171,
+      "lambda": 1.0009765625,
+      "alpha": 8.0,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 172,
+      "lambda": 1.0009765625,
+      "alpha": 4.0,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 173,
+      "lambda": 1.0009765625,
+      "alpha": 2.0,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 174,
+      "lambda": 1.0009765625,
+      "alpha": 1.0,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 175,
+      "lambda": 1.0009765625,
+      "alpha": 0.5,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 176,
+      "lambda": 1.0009765625,
+      "alpha": 0.25,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 177,
+      "lambda": 1.0009765625,
+      "alpha": 0.125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 178,
+      "lambda": 1.0009765625,
+      "alpha": 0.0625,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 179,
+      "lambda": 1.0009765625,
+      "alpha": 0.03125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 180,
+      "lambda": 1.0009765625,
+      "alpha": 0.015625,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 181,
+      "lambda": 1.0009765625,
+      "alpha": 0.0078125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 182,
+      "lambda": 1.0009765625,
+      "alpha": 0.00390625,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 183,
+      "lambda": 1.0009765625,
+      "alpha": 0.001953125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 184,
+      "lambda": 1.0009765625,
+      "alpha": 0.0009765625,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 185,
+      "lambda": 1.0009765625,
+      "alpha": 0.00048828125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 186,
+      "lambda": 1.0009765625,
+      "alpha": 0.000244140625,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 187,
+      "lambda": 1.0009765625,
+      "alpha": 0.0001220703125,
+      "lambda_k": 10,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 188,
+      "lambda": 1.001953125,
+      "alpha": 8.0,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 189,
+      "lambda": 1.001953125,
+      "alpha": 4.0,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 190,
+      "lambda": 1.001953125,
+      "alpha": 2.0,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 191,
+      "lambda": 1.001953125,
+      "alpha": 1.0,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 192,
+      "lambda": 1.001953125,
+      "alpha": 0.5,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 193,
+      "lambda": 1.001953125,
+      "alpha": 0.25,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 194,
+      "lambda": 1.001953125,
+      "alpha": 0.125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 195,
+      "lambda": 1.001953125,
+      "alpha": 0.0625,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 196,
+      "lambda": 1.001953125,
+      "alpha": 0.03125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 197,
+      "lambda": 1.001953125,
+      "alpha": 0.015625,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 198,
+      "lambda": 1.001953125,
+      "alpha": 0.0078125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 199,
+      "lambda": 1.001953125,
+      "alpha": 0.00390625,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 200,
+      "lambda": 1.001953125,
+      "alpha": 0.001953125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 201,
+      "lambda": 1.001953125,
+      "alpha": 0.0009765625,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 202,
+      "lambda": 1.001953125,
+      "alpha": 0.00048828125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 203,
+      "lambda": 1.001953125,
+      "alpha": 0.000244140625,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 204,
+      "lambda": 1.001953125,
+      "alpha": 0.0001220703125,
+      "lambda_k": 9,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 205,
+      "lambda": 1.00390625,
+      "alpha": 8.0,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 206,
+      "lambda": 1.00390625,
+      "alpha": 4.0,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 207,
+      "lambda": 1.00390625,
+      "alpha": 2.0,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 208,
+      "lambda": 1.00390625,
+      "alpha": 1.0,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 209,
+      "lambda": 1.00390625,
+      "alpha": 0.5,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 210,
+      "lambda": 1.00390625,
+      "alpha": 0.25,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 211,
+      "lambda": 1.00390625,
+      "alpha": 0.125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 212,
+      "lambda": 1.00390625,
+      "alpha": 0.0625,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 213,
+      "lambda": 1.00390625,
+      "alpha": 0.03125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 214,
+      "lambda": 1.00390625,
+      "alpha": 0.015625,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 215,
+      "lambda": 1.00390625,
+      "alpha": 0.0078125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 216,
+      "lambda": 1.00390625,
+      "alpha": 0.00390625,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 217,
+      "lambda": 1.00390625,
+      "alpha": 0.001953125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 218,
+      "lambda": 1.00390625,
+      "alpha": 0.0009765625,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 219,
+      "lambda": 1.00390625,
+      "alpha": 0.00048828125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 220,
+      "lambda": 1.00390625,
+      "alpha": 0.000244140625,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 221,
+      "lambda": 1.00390625,
+      "alpha": 0.0001220703125,
+      "lambda_k": 8,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 222,
+      "lambda": 1.0078125,
+      "alpha": 8.0,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 223,
+      "lambda": 1.0078125,
+      "alpha": 4.0,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 224,
+      "lambda": 1.0078125,
+      "alpha": 2.0,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 225,
+      "lambda": 1.0078125,
+      "alpha": 1.0,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 226,
+      "lambda": 1.0078125,
+      "alpha": 0.5,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 227,
+      "lambda": 1.0078125,
+      "alpha": 0.25,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 228,
+      "lambda": 1.0078125,
+      "alpha": 0.125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 229,
+      "lambda": 1.0078125,
+      "alpha": 0.0625,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 230,
+      "lambda": 1.0078125,
+      "alpha": 0.03125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 231,
+      "lambda": 1.0078125,
+      "alpha": 0.015625,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 232,
+      "lambda": 1.0078125,
+      "alpha": 0.0078125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 233,
+      "lambda": 1.0078125,
+      "alpha": 0.00390625,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 234,
+      "lambda": 1.0078125,
+      "alpha": 0.001953125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 235,
+      "lambda": 1.0078125,
+      "alpha": 0.0009765625,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 236,
+      "lambda": 1.0078125,
+      "alpha": 0.00048828125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 237,
+      "lambda": 1.0078125,
+      "alpha": 0.000244140625,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 238,
+      "lambda": 1.0078125,
+      "alpha": 0.0001220703125,
+      "lambda_k": 7,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 239,
+      "lambda": 1.015625,
+      "alpha": 8.0,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 240,
+      "lambda": 1.015625,
+      "alpha": 4.0,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 241,
+      "lambda": 1.015625,
+      "alpha": 2.0,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 242,
+      "lambda": 1.015625,
+      "alpha": 1.0,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 243,
+      "lambda": 1.015625,
+      "alpha": 0.5,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 244,
+      "lambda": 1.015625,
+      "alpha": 0.25,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 245,
+      "lambda": 1.015625,
+      "alpha": 0.125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 246,
+      "lambda": 1.015625,
+      "alpha": 0.0625,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 247,
+      "lambda": 1.015625,
+      "alpha": 0.03125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 248,
+      "lambda": 1.015625,
+      "alpha": 0.015625,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 249,
+      "lambda": 1.015625,
+      "alpha": 0.0078125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 250,
+      "lambda": 1.015625,
+      "alpha": 0.00390625,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 251,
+      "lambda": 1.015625,
+      "alpha": 0.001953125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 252,
+      "lambda": 1.015625,
+      "alpha": 0.0009765625,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 253,
+      "lambda": 1.015625,
+      "alpha": 0.00048828125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 254,
+      "lambda": 1.015625,
+      "alpha": 0.000244140625,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 255,
+      "lambda": 1.015625,
+      "alpha": 0.0001220703125,
+      "lambda_k": 6,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 256,
+      "lambda": 1.03125,
+      "alpha": 8.0,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 257,
+      "lambda": 1.03125,
+      "alpha": 4.0,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 258,
+      "lambda": 1.03125,
+      "alpha": 2.0,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 259,
+      "lambda": 1.03125,
+      "alpha": 1.0,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 260,
+      "lambda": 1.03125,
+      "alpha": 0.5,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 261,
+      "lambda": 1.03125,
+      "alpha": 0.25,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 262,
+      "lambda": 1.03125,
+      "alpha": 0.125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 263,
+      "lambda": 1.03125,
+      "alpha": 0.0625,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 264,
+      "lambda": 1.03125,
+      "alpha": 0.03125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 265,
+      "lambda": 1.03125,
+      "alpha": 0.015625,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 266,
+      "lambda": 1.03125,
+      "alpha": 0.0078125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 267,
+      "lambda": 1.03125,
+      "alpha": 0.00390625,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 268,
+      "lambda": 1.03125,
+      "alpha": 0.001953125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 269,
+      "lambda": 1.03125,
+      "alpha": 0.0009765625,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 270,
+      "lambda": 1.03125,
+      "alpha": 0.00048828125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 271,
+      "lambda": 1.03125,
+      "alpha": 0.000244140625,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 272,
+      "lambda": 1.03125,
+      "alpha": 0.0001220703125,
+      "lambda_k": 5,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 273,
+      "lambda": 1.0625,
+      "alpha": 8.0,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 274,
+      "lambda": 1.0625,
+      "alpha": 4.0,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 275,
+      "lambda": 1.0625,
+      "alpha": 2.0,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 276,
+      "lambda": 1.0625,
+      "alpha": 1.0,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 277,
+      "lambda": 1.0625,
+      "alpha": 0.5,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 278,
+      "lambda": 1.0625,
+      "alpha": 0.25,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 279,
+      "lambda": 1.0625,
+      "alpha": 0.125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 280,
+      "lambda": 1.0625,
+      "alpha": 0.0625,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 281,
+      "lambda": 1.0625,
+      "alpha": 0.03125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 282,
+      "lambda": 1.0625,
+      "alpha": 0.015625,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 283,
+      "lambda": 1.0625,
+      "alpha": 0.0078125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 284,
+      "lambda": 1.0625,
+      "alpha": 0.00390625,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 285,
+      "lambda": 1.0625,
+      "alpha": 0.001953125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 286,
+      "lambda": 1.0625,
+      "alpha": 0.0009765625,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 287,
+      "lambda": 1.0625,
+      "alpha": 0.00048828125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 288,
+      "lambda": 1.0625,
+      "alpha": 0.000244140625,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 289,
+      "lambda": 1.0625,
+      "alpha": 0.0001220703125,
+      "lambda_k": 4,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 290,
+      "lambda": 1.125,
+      "alpha": 8.0,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 291,
+      "lambda": 1.125,
+      "alpha": 4.0,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 292,
+      "lambda": 1.125,
+      "alpha": 2.0,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 293,
+      "lambda": 1.125,
+      "alpha": 1.0,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 294,
+      "lambda": 1.125,
+      "alpha": 0.5,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 295,
+      "lambda": 1.125,
+      "alpha": 0.25,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 296,
+      "lambda": 1.125,
+      "alpha": 0.125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 297,
+      "lambda": 1.125,
+      "alpha": 0.0625,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 298,
+      "lambda": 1.125,
+      "alpha": 0.03125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 299,
+      "lambda": 1.125,
+      "alpha": 0.015625,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 300,
+      "lambda": 1.125,
+      "alpha": 0.0078125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 301,
+      "lambda": 1.125,
+      "alpha": 0.00390625,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 302,
+      "lambda": 1.125,
+      "alpha": 0.001953125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 303,
+      "lambda": 1.125,
+      "alpha": 0.0009765625,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 304,
+      "lambda": 1.125,
+      "alpha": 0.00048828125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 305,
+      "lambda": 1.125,
+      "alpha": 0.000244140625,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 306,
+      "lambda": 1.125,
+      "alpha": 0.0001220703125,
+      "lambda_k": 3,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 307,
+      "lambda": 1.25,
+      "alpha": 8.0,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 308,
+      "lambda": 1.25,
+      "alpha": 4.0,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 309,
+      "lambda": 1.25,
+      "alpha": 2.0,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 310,
+      "lambda": 1.25,
+      "alpha": 1.0,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 311,
+      "lambda": 1.25,
+      "alpha": 0.5,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 312,
+      "lambda": 1.25,
+      "alpha": 0.25,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 313,
+      "lambda": 1.25,
+      "alpha": 0.125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 314,
+      "lambda": 1.25,
+      "alpha": 0.0625,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 315,
+      "lambda": 1.25,
+      "alpha": 0.03125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 316,
+      "lambda": 1.25,
+      "alpha": 0.015625,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 317,
+      "lambda": 1.25,
+      "alpha": 0.0078125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 318,
+      "lambda": 1.25,
+      "alpha": 0.00390625,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 319,
+      "lambda": 1.25,
+      "alpha": 0.001953125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 320,
+      "lambda": 1.25,
+      "alpha": 0.0009765625,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 321,
+      "lambda": 1.25,
+      "alpha": 0.00048828125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 322,
+      "lambda": 1.25,
+      "alpha": 0.000244140625,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 323,
+      "lambda": 1.25,
+      "alpha": 0.0001220703125,
+      "lambda_k": 2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 324,
+      "lambda": 1.5,
+      "alpha": 8.0,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 325,
+      "lambda": 1.5,
+      "alpha": 4.0,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 326,
+      "lambda": 1.5,
+      "alpha": 2.0,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 327,
+      "lambda": 1.5,
+      "alpha": 1.0,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 328,
+      "lambda": 1.5,
+      "alpha": 0.5,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 329,
+      "lambda": 1.5,
+      "alpha": 0.25,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 330,
+      "lambda": 1.5,
+      "alpha": 0.125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 331,
+      "lambda": 1.5,
+      "alpha": 0.0625,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 332,
+      "lambda": 1.5,
+      "alpha": 0.03125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 333,
+      "lambda": 1.5,
+      "alpha": 0.015625,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 334,
+      "lambda": 1.5,
+      "alpha": 0.0078125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 335,
+      "lambda": 1.5,
+      "alpha": 0.00390625,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 336,
+      "lambda": 1.5,
+      "alpha": 0.001953125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 337,
+      "lambda": 1.5,
+      "alpha": 0.0009765625,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 338,
+      "lambda": 1.5,
+      "alpha": 0.00048828125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 339,
+      "lambda": 1.5,
+      "alpha": 0.000244140625,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 340,
+      "lambda": 1.5,
+      "alpha": 0.0001220703125,
+      "lambda_k": 1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 341,
+      "lambda": 2.0,
+      "alpha": 8.0,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 342,
+      "lambda": 2.0,
+      "alpha": 4.0,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 343,
+      "lambda": 2.0,
+      "alpha": 2.0,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 344,
+      "lambda": 2.0,
+      "alpha": 1.0,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 345,
+      "lambda": 2.0,
+      "alpha": 0.5,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 346,
+      "lambda": 2.0,
+      "alpha": 0.25,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 347,
+      "lambda": 2.0,
+      "alpha": 0.125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 348,
+      "lambda": 2.0,
+      "alpha": 0.0625,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 349,
+      "lambda": 2.0,
+      "alpha": 0.03125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 350,
+      "lambda": 2.0,
+      "alpha": 0.015625,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 351,
+      "lambda": 2.0,
+      "alpha": 0.0078125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 352,
+      "lambda": 2.0,
+      "alpha": 0.00390625,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 353,
+      "lambda": 2.0,
+      "alpha": 0.001953125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 354,
+      "lambda": 2.0,
+      "alpha": 0.0009765625,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 355,
+      "lambda": 2.0,
+      "alpha": 0.00048828125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 356,
+      "lambda": 2.0,
+      "alpha": 0.000244140625,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 357,
+      "lambda": 2.0,
+      "alpha": 0.0001220703125,
+      "lambda_k": 0,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 358,
+      "lambda": 3.0,
+      "alpha": 8.0,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 359,
+      "lambda": 3.0,
+      "alpha": 4.0,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 360,
+      "lambda": 3.0,
+      "alpha": 2.0,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 361,
+      "lambda": 3.0,
+      "alpha": 1.0,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 362,
+      "lambda": 3.0,
+      "alpha": 0.5,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 363,
+      "lambda": 3.0,
+      "alpha": 0.25,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 364,
+      "lambda": 3.0,
+      "alpha": 0.125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 365,
+      "lambda": 3.0,
+      "alpha": 0.0625,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 366,
+      "lambda": 3.0,
+      "alpha": 0.03125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 367,
+      "lambda": 3.0,
+      "alpha": 0.015625,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 368,
+      "lambda": 3.0,
+      "alpha": 0.0078125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 369,
+      "lambda": 3.0,
+      "alpha": 0.00390625,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 370,
+      "lambda": 3.0,
+      "alpha": 0.001953125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 371,
+      "lambda": 3.0,
+      "alpha": 0.0009765625,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 372,
+      "lambda": 3.0,
+      "alpha": 0.00048828125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 373,
+      "lambda": 3.0,
+      "alpha": 0.000244140625,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 374,
+      "lambda": 3.0,
+      "alpha": 0.0001220703125,
+      "lambda_k": -1,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    },
+    {
+      "tuple_id": 375,
+      "lambda": 5.0,
+      "alpha": 8.0,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -3
+    },
+    {
+      "tuple_id": 376,
+      "lambda": 5.0,
+      "alpha": 4.0,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -2
+    },
+    {
+      "tuple_id": 377,
+      "lambda": 5.0,
+      "alpha": 2.0,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": -1
+    },
+    {
+      "tuple_id": 378,
+      "lambda": 5.0,
+      "alpha": 1.0,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 0
+    },
+    {
+      "tuple_id": 379,
+      "lambda": 5.0,
+      "alpha": 0.5,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 1
+    },
+    {
+      "tuple_id": 380,
+      "lambda": 5.0,
+      "alpha": 0.25,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 2
+    },
+    {
+      "tuple_id": 381,
+      "lambda": 5.0,
+      "alpha": 0.125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 3
+    },
+    {
+      "tuple_id": 382,
+      "lambda": 5.0,
+      "alpha": 0.0625,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 4
+    },
+    {
+      "tuple_id": 383,
+      "lambda": 5.0,
+      "alpha": 0.03125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 5
+    },
+    {
+      "tuple_id": 384,
+      "lambda": 5.0,
+      "alpha": 0.015625,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 6
+    },
+    {
+      "tuple_id": 385,
+      "lambda": 5.0,
+      "alpha": 0.0078125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 7
+    },
+    {
+      "tuple_id": 386,
+      "lambda": 5.0,
+      "alpha": 0.00390625,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 8
+    },
+    {
+      "tuple_id": 387,
+      "lambda": 5.0,
+      "alpha": 0.001953125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 9
+    },
+    {
+      "tuple_id": 388,
+      "lambda": 5.0,
+      "alpha": 0.0009765625,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 10
+    },
+    {
+      "tuple_id": 389,
+      "lambda": 5.0,
+      "alpha": 0.00048828125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 11
+    },
+    {
+      "tuple_id": 390,
+      "lambda": 5.0,
+      "alpha": 0.000244140625,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 12
+    },
+    {
+      "tuple_id": 391,
+      "lambda": 5.0,
+      "alpha": 0.0001220703125,
+      "lambda_k": -2,
+      "lambda_form": "1+2^-k",
+      "alpha_k": 13
+    }
+  ]
+}

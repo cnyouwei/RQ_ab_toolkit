@@ -1,0 +1,38 @@
+{
+  "simulation": {
+    "warmup_time": 1000000.0,
+    "sample_time": 10000000.0,
+    "replications": 250,
+    "threads": 0,
+    "seed": 123456789,
+    "normalize_service_mean_to_one": true
+  },
+  "model": {
+    "name": "M/M/1+M example",
+    "alias": "mm1m",
+    "arrival": {
+      "distribution": {
+        "family": "exponential",
+        "params": {
+          "rate": 1.0
+        }
+      }
+    },
+    "service": {
+      "distribution": {
+        "family": "exponential",
+        "params": {
+          "rate": 1.0
+        }
+      }
+    },
+    "patience": {
+      "distribution": {
+        "family": "exponential",
+        "params": {
+          "rate": 1.0
+        }
+      }
+    }
+  }
+}

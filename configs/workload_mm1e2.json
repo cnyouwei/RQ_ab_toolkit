@@ -1,0 +1,39 @@
+{
+  "simulation": {
+    "warmup_time": 100000.0,
+    "sample_time": 1000000.0,
+    "replications": 250,
+    "threads": 0,
+    "seed": 123456789,
+    "normalize_service_mean_to_one": true
+  },
+  "model": {
+    "name": "M/M/1+E_2 example",
+    "alias": "mm1e2",
+    "arrival": {
+      "distribution": {
+        "family": "exponential",
+        "params": {
+          "rate": 1.0
+        }
+      }
+    },
+    "service": {
+      "distribution": {
+        "family": "exponential",
+        "params": {
+          "rate": 1.0
+        }
+      }
+    },
+    "patience": {
+      "distribution": {
+        "family": "erlang_k",
+        "params": {
+          "k": 2,
+          "rate": 2.0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "simulation": {
+    "warmup_time": 100000.0,
+    "sample_time": 1000000.0,
+    "replications": 100,
+    "threads": 0,
+    "seed": 123456789,
+    "normalize_service_mean_to_one": true
+  },
+  "model": {
+    "name": "H_2(4)/LN(1,2)/1+H_2(4) example",
+    "alias": "h2_4ln1_21h2_4",
+    "arrival": {
+      "distribution": {
+        "family": "hyperexponential2",
+        "params": {
+          "p": 0.8872983346207416,
+          "rate1": 1.7745966692414832,
+          "rate2": 0.22540333075851682
+        }
+      }
+    },
+    "service": {
+      "distribution": {
+        "family": "lognormal",
+        "params": {
+          "mean": 1.0,
+          "scv": 2.0
+        }
+      }
+    },
+    "patience": {
+      "distribution": {
+        "family": "hyperexponential2",
+        "params": {
+          "p": 0.8872983346207416,
+          "rate1": 1.7745966692414832,
+          "rate2": 0.22540333075851682
+        }
+      }
+    }
+  }
+}

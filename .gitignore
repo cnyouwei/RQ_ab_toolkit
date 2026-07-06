@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# C++ / CMake build output
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+
+# Generated results (reproduce.py, scripts/)
+results/
+results_quick/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Editors
+.vscode/
+.idea/
