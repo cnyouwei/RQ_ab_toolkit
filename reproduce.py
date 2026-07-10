@@ -3,15 +3,15 @@
 
 Targets (aliases in parentheses):
   fig:Var_approx  (var-approx)  Effective-IDW overlay, H2(4)/M/1+M and +E2
-  fig:MM1_GI      (mm1-gi)      Tripanel heatmaps: M/M/1+{M,E2,H2(4)}
-  fig:MGI1_GI     (mgi1-gi)     Tripanel heatmaps: M/LN(1,4)/1+{H2(4),E2}
-  fig:GIGI1_GI    (gigi1-gi)    Tripanel heatmaps: {E2,H2(4)}/LN(1,2)/1+{E2,H2(4)}
-  fig:QIS         (qis)         Tripanel heatmaps: two tandem systems
+  fig:MM1_GI      (mm1-gi)      Tripanel + RQ comparison: M/M/1+{M,E2,H2(4)}
+  fig:MGI1_GI     (mgi1-gi)     Tripanel + RQ comparison: M/LN(1,4)/1+{H2(4),E2}
+  fig:GIGI1_GI    (gigi1-gi)    Tripanel + RQ comparison:
+                                {E2,H2(4)}/LN(1,2)/1+{E2,H2(4)}
+  fig:QIS         (qis)         Tripanel + RQ comparison: two tandem systems
   tables                        w_{c,k}(t) matrix tables + b(c) tables, k=1,2,3
-  all                           the five paper figures (12 PDFs)
-  aux                           non-paper artifacts: twopanel + ratio heatmaps for
-                                every model, all idw-effective overlays, w-table
-                                overlays and b-calibration diagnostics
+  all                           the five paper figure groups (22 PDFs)
+  aux                           complete plot set for every model, all IDW
+                                overlays, w-table overlays and b diagnostics
 
 Existing outputs are reused (with a provenance check against the config);
 use --force to regenerate everything a target needs.  --quick runs the whole
@@ -548,6 +548,14 @@ def add_twopanel_step(plan: Plan, ctx: Context, model: str) -> str:
     )
 
 
+def add_heatmap_steps(plan: Plan, ctx: Context, model: str) -> tuple[str, str]:
+    """Add benchmark and first-vs-refined RQ heatmaps for one model."""
+    return (
+        add_tripanel_step(plan, ctx, model),
+        add_twopanel_step(plan, ctx, model),
+    )
+
+
 def add_ratio_step(plan: Plan, ctx: Context, model: str) -> str:
     workload = add_workload_step(plan, ctx, model)
     refined = add_analytic_step(plan, ctx, model, "refined")
@@ -608,7 +616,7 @@ def add_idw_steps(plan: Plan, ctx: Context, config_name: str) -> str:
                 outputs=[],
                 heavy=True,
                 deps=(build,),
-                always=True,  # existence was glob-checked before adding this step
+                always=True,
             )
         )
         sim_deps: tuple[str, ...] = (sim_key,)
@@ -639,6 +647,7 @@ def add_idw_steps(plan: Plan, ctx: Context, config_name: str) -> str:
             cmd=plot_cmd,
             outputs=[out_pdf],
             deps=tuple([*sim_deps, *table_deps]),
+            always=True,
         )
     )
 
@@ -707,7 +716,7 @@ def expand_target(plan: Plan, ctx: Context, target: str) -> bool:
     for label, spec in TRIPANEL_FIGURES.items():
         if t in (label.lower(), label.split(":")[1].lower(), spec["alias"]):
             for model in spec["models"]:
-                add_tripanel_step(plan, ctx, model)
+                add_heatmap_steps(plan, ctx, model)
             return True
 
     if t in (IDW_FIGURE["label"].lower(), "var_approx", IDW_FIGURE["alias"]):
@@ -725,14 +734,13 @@ def expand_target(plan: Plan, ctx: Context, target: str) -> bool:
             add_idw_steps(plan, ctx, name)
         for spec in TRIPANEL_FIGURES.values():
             for model in spec["models"]:
-                add_tripanel_step(plan, ctx, model)
+                add_heatmap_steps(plan, ctx, model)
         return True
 
     if t == "aux":
         for model in ALL_MODELS:
-            add_twopanel_step(plan, ctx, model)
+            add_heatmap_steps(plan, ctx, model)
             add_ratio_step(plan, ctx, model)
-            add_tripanel_step(plan, ctx, model)
         for name in ALL_IDW_CONFIGS:
             add_idw_steps(plan, ctx, name)
         add_diagnostics_steps(plan, ctx)

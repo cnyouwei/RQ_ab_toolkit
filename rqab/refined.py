@@ -84,29 +84,12 @@ _SECONDARY_BLANKS = {
 }
 
 
-def b_table_index(tilde_c: float, k: int) -> float:
-    """Map a model's standardized load index to the b-table's c axis.
+def canonical_b_table_c(tilde_c: float, k: int) -> float:
+    """Return the canonical raw-load coordinate for ``tilde_c``.
 
-    The k-specific b table (b_table_k{k}.csv) is indexed by the raw
-    critical-load coefficient c_ref of the canonical M/M/1+E_k reference
-    model, not by the target model's raw c: the calibration
-    (src/rq_calibration/b_calibration.cpp) stores row.c = c_ref while
-    matching b against the w table at the standardized index
-    tilde_c_ref = c_ref * beta_ref**(-1/(k+1)), beta_ref = k^k/k!.
-    The calibration transfers between models through that standardized
-    index (RQ_ab.tex, Lemma var_expression), so b must be looked up at
-    the c_ref whose standardized index equals the model's tilde_c:
-
-        c_ref = tilde_c * beta_ref**(1/(k+1))
-
-    or, in target-model primitives,
-
-        c_ref = c * ((c_a^2+c_s^2)/(2 mu))**(-k/(k+1))
-                  * (beta_ref/beta_patience)**(1/(k+1)).
-
-    For the canonical reference primitives ((c_a^2+c_s^2)/(2 mu) = 1 and
-    beta_patience = beta_ref) this reduces to c_ref = c, so the lookup is
-    unchanged on M/M/1+M (k=1) and the mean-one M/M/1+E_k references.
+    The calibration table stores ``c_ref`` for the mean-one M/M/1+E_k
+    reference model, where
+    ``tilde_c = c_ref * (k**k / k!)**(-1 / (k + 1))``.
     """
     if k < 1:
         raise ValueError("k must be >= 1")
@@ -163,10 +146,7 @@ class RefinedSolver:
             beta_patience=base.beta_patience,
         )
 
-        # The b table's c axis is the canonical reference model's raw
-        # coefficient c_ref, not this model's c: convert through the
-        # standardized load index (see b_table_index).
-        b = self.b_table.evaluate(b_table_index(tilde_c, base.k))
+        b = self.b_table.evaluate(canonical_b_table_c(tilde_c, base.k))
 
         ia = arrival_idc_curve_for(self.model, s_values=self.s_grid, lam=lam)
         if len(ia) != len(self.s_grid):

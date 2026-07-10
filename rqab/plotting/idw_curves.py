@@ -1,9 +1,8 @@
 """Effective-IDW curve figures driven by configs/effective_idw_*.json.
 
-Port of the live parts of the old scripts/effective_idw_plotter.py and
-plot_effective_idw_from_config.py: for each (model, alpha_i) it plots the
+For each (model, alpha_i), the figure compares the
 simulated effective IDW (solid, from results/model{idx}_{name}_idx{i}_curve.csv
-written by the wck_effective_idw_sim binary) against the analytical
+written by ``idw_sim``) with the analytical
 approximation hat_Iw(t) * w_{tilde c,k}(alpha^{2h} tau t) (dashed).
 
 Pure plotting: no simulations are run here.  The optional
@@ -209,7 +208,7 @@ def _extract_alpha(cfg: dict[str, Any]) -> tuple[list[int], float]:
 
 
 # ---------------------------------------------------------------------------
-# Curve construction (numeric core; verbatim from the old plotter)
+# Curve construction
 # ---------------------------------------------------------------------------
 
 def _build_model_curves(
@@ -592,9 +591,7 @@ def run_plot_from_config_dict(
         dpi = dpi_override
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    # Simulation curve CSVs are looked up in curves_dir unless the config's
-    # simulation_overlay.results_dir overrides it (old default: alongside
-    # the output figure).
+    # simulation_overlay.results_dir takes precedence over curves_dir.
     default_curves_dir = Path(curves_dir) if curves_dir is not None else save_path.parent
     overlay_cfg = _extract_overlay_config(
         cfg=config,
@@ -662,7 +659,7 @@ def run_plot_from_config_dict(
         out_dir_hint = str(overlay_cfg["results_dir"])
         print("hint: generate simulation data with:", file=sys.stderr)
         print(
-            f"  wck_effective_idw_sim --config \"{config_hint}\" --out-dir \"{out_dir_hint}\"",
+            f"  ./build/idw_sim --config \"{config_hint}\" --out-dir \"{out_dir_hint}\"",
             file=sys.stderr,
         )
 
@@ -701,9 +698,8 @@ def plot_idw_effective(
 
     ``curves_dir`` is the directory holding the simulated
     model{idx}_*_idx{i}_curve.csv overlays (default: next to the output
-    figure, i.e. results/).  ``out_pdf`` defaults to the config's
-    ``output.path`` resolved relative to the config file's directory,
-    matching the old plotter's naming (results/idw_effective_<alias>.pdf).
+    figure, i.e. results/). ``out_pdf`` defaults to the config's
+    ``output.path`` resolved relative to the config file's directory.
     ``run_missing_sim(config_path, curves_dir)`` is an optional hook the
     CLI layer can use to generate missing overlay CSVs; rqab.plotting
     itself never runs simulations.

@@ -1,16 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the refined/first RQ grid pipeline (single-station and tandem).
-
-Port of the pre-refactor tests/test_refined_rq_grid.py and
-tests/test_tandem_refined_rq_grid.py against the rqab package and the
-consolidated scripts/run_grid.py CLI.
-
-Adapted assertions vs the old suite:
-* the tandem secondary-method label in NEW CSV output is "wg" (the old
-  run_tandem_refined_rq_grid.py wrote "gw"); the plot loaders accept both.
-* solve_one_tuple lives on rqab.refined.RefinedSolver, and solve_fixed_point
-  takes an rhs callback + BisectOptions.
-"""
+"""Tests for the refined/first RQ grid pipeline (single-station and tandem)."""
 from __future__ import annotations
 
 import math
@@ -250,22 +239,18 @@ class TestRefinedSolverInternals(unittest.TestCase):
         z_high_alpha = z_of(1.1, 2.0)
         self.assertGreaterEqual(z_low_alpha, z_high_alpha)
 
-    def test_b_table_index_canonical_identity(self) -> None:
-        # For the canonical M/M/1+E_k reference primitives
-        # ((c_a2 + c_s2)/(2 mu) = 1, beta_patience = k^k/k!) the b-table
-        # coordinate is the model's raw c itself.
+    def test_canonical_b_table_c_is_identity_for_reference_models(self) -> None:
         for k in (1, 2, 3):
             beta_ref = float(k**k) / float(math.factorial(k))
             for c in (-5.0, -0.125, 0.0, 0.7, 12.0):
                 _tau, tilde_c = tau_tilde_c(
                     c=c, k=k, mu=1.0, c_a2=1.0, c_s2=1.0, beta_patience=beta_ref
                 )
-                self.assertAlmostEqual(refined_mod.b_table_index(tilde_c, k), c, places=12)
+                self.assertAlmostEqual(
+                    refined_mod.canonical_b_table_c(tilde_c, k), c, places=12
+                )
 
-    def test_b_table_index_matches_primitive_form(self) -> None:
-        # c_ref = c * ((c_a2+c_s2)/(2mu))^(-k/(k+1)) * (beta_ref/beta_model)^(1/(k+1)),
-        # i.e. the composition with tau_tilde_c reproduces the target-model
-        # primitive form of the conversion.
+    def test_canonical_b_table_c_matches_primitive_form(self) -> None:
         k, mu, c_a2, c_s2, beta_model = 2, 1.3, 1.7, 0.4, 2.9
         beta_ref = float(k**k) / float(math.factorial(k))
         ratio = (c_a2 + c_s2) / (2.0 * mu)
@@ -276,16 +261,52 @@ class TestRefinedSolverInternals(unittest.TestCase):
             expected = (
                 c * ratio ** (-k / (k + 1.0)) * (beta_ref / beta_model) ** (1.0 / (k + 1.0))
             )
-            self.assertAlmostEqual(refined_mod.b_table_index(tilde_c, k), expected, places=12)
+            self.assertAlmostEqual(
+                refined_mod.canonical_b_table_c(tilde_c, k), expected, places=12
+            )
 
-    def test_b_table_index_rejects_bad_k(self) -> None:
+    def test_build_kernel_queries_b_table_at_canonical_coordinate(self) -> None:
+        class RecordingBTable:
+            def __init__(self) -> None:
+                self.queries: list[float] = []
+
+            def evaluate(self, c: float) -> float:
+                self.queries.append(c)
+                return 1.0
+
+        model = load_model_config(CONFIGS_DIR / "workload_h2_4ln1_21e2.json")
+        base = build_base_stats(model, k=infer_k_from_patience(model.patience))
+        b_table = RecordingBTable()
+        w_table = WTableInterpolator(
+            c_grid=[-100.0, 100.0],
+            t_grid=[0.0, 1.0e8],
+            w_matrix=[[1.0, 1.0], [1.0, 1.0]],
+        )
+        solver = refined_mod.RefinedSolver(
+            model=model,
+            base=base,
+            b_table=b_table,  # type: ignore[arg-type]
+            w_interp=w_table,
+            s_grid=[0.0, 1.0],
+        )
+
+        kernel = solver.build_kernel(lam=1.2, alpha=0.5)
+
+        self.assertEqual(len(b_table.queries), 1)
+        self.assertAlmostEqual(
+            b_table.queries[0],
+            refined_mod.canonical_b_table_c(kernel.tilde_c, base.k),
+            places=12,
+        )
+        self.assertNotAlmostEqual(b_table.queries[0], kernel.c, places=6)
+
+    def test_canonical_b_table_c_rejects_bad_k(self) -> None:
         with self.assertRaises(ValueError):
-            refined_mod.b_table_index(1.0, 0)
+            refined_mod.canonical_b_table_c(1.0, 0)
 
 
 class TestPlotLoaders(unittest.TestCase):
     def test_plot_metadata_accepts_tandem_patience(self) -> None:
-        # Old test_plot_loader_accepts_tandem_patience: patience under queue2.
         alias, patience_mean, _title = model_plot_metadata(
             CONFIGS_DIR / "workload_tandem_e2h2_4_to_m1e2.json"
         )
@@ -293,7 +314,6 @@ class TestPlotLoaders(unittest.TestCase):
         self.assertAlmostEqual(patience_mean, 1.0, places=12)
 
     def test_plot_metadata_accepts_tandem_patience_h2(self) -> None:
-        # Old test_tripanel_loader_accepts_tandem_patience.
         alias, patience_mean, title = model_plot_metadata(
             CONFIGS_DIR / "workload_tandem_h2_4e2_to_m1h2_4.json"
         )
@@ -348,7 +368,7 @@ class TestPlotLoaders(unittest.TestCase):
         ]
 
     def test_combined_loader_accepts_wg_and_gw_labels(self) -> None:
-        # NEW CSVs write "wg"; OLD tandem CSVs wrote "gw".  Both must load.
+        # Both accepted Ward-Glynn labels normalize to the same display name.
         for label in ("wg", "gw"):
             with temp_dir() as tmp:
                 combined_csv = tmp / "combined.csv"
@@ -506,8 +526,7 @@ class TestGridCLI(unittest.TestCase):
                 self.assertTrue(str(row["solver_status"]).startswith("ok"))
                 self.assertTrue(str(row["status_secondary"]).startswith("ok"))
                 self.assertTrue(str(row["status_hg"]).startswith("ok"))
-                # H2 patience has F'(0) > 0 so WG is the secondary method.
-                # (Adapted: the old tandem script labeled this "gw".)
+                # H2 patience has F'(0) > 0, so WG is the secondary method.
                 self.assertEqual(str(row["secondary_method"]), "wg")
                 self.assertNotEqual(str(row["z_hg"]), "")
                 self.assertNotEqual(str(row["c_x2"]), "")

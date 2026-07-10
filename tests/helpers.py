@@ -73,7 +73,7 @@ def fail_message(title: str, cmd: list[str], proc: subprocess.CompletedProcess[s
 
 
 # ---------------------------------------------------------------------------
-# Payload factories (same shapes as the pre-refactor test suite)
+# Payload factories
 # ---------------------------------------------------------------------------
 
 def tiny_grid_payload() -> dict:

@@ -1,8 +1,4 @@
-"""Signed-relative-error heatmap panels: approximation vs simulated workload.
-
-Consolidates the old scripts plot_refined_rq_ratio.py (1 panel),
-plot_approx_ratio_twopanel.py (First RQ | Refined RQ) and
-plot_approx_ratio_tripanel.py (RQ | WG-or-Hazard | HG).
+"""Signed-relative-error heatmaps: approximation vs simulated workload.
 
 Pure plotting: these functions load existing CSVs and draw figures.  They
 never run upstream simulation/grid stages; missing inputs raise
@@ -60,8 +56,8 @@ def load_z_rows(
     """Load one approximation column keyed by tuple_id.
 
     Keeps only rows whose ``status_col`` starts with "ok" and whose z value
-    is non-empty (the old refined/first-RQ loader semantics).  ``label`` is
-    used in error messages, e.g. "refined" or "first-RQ".
+    is non-empty. ``label`` is used in error messages, e.g. "refined" or
+    "first-RQ".
     """
     if not path.exists():
         raise FileNotFoundError(f"{label} aggregate CSV not found: {path}")
@@ -91,8 +87,8 @@ def load_combined_secondary_rows(path: Path) -> tuple[dict[int, dict[str, Any]],
     ``(rows, method_title)`` where each row is
     ``{"secondary_method", "z_secondary", "z_hg"}`` keyed by tuple_id.
     Values whose status column does not start with "ok" become NaN.  Both
-    "wg" and the legacy tandem "gw" CSV labels are accepted for the
-    Ward--Glynn method; the displayed title is always "WG".
+    The accepted Ward--Glynn labels "wg" and "gw" share the display title
+    "WG".
     """
     if not path.exists():
         raise FileNotFoundError(f"combined aggregate CSV not found: {path}")
@@ -297,12 +293,11 @@ def render_ratio_panels(
 
     ``panels`` is a list of ``(panel_title, ratio_grid)``; each grid entry
     is the ratio approximation/simulated-workload (NaN = missing).  The
-    layouts replicate the old plotters exactly:
+    Figure sizes are selected by panel count:
 
-    * 1 panel: plot_refined_rq_ratio.py (7.0x4.8, "+x.x%" annotations)
-    * 2 panels: plot_approx_ratio_twopanel.py (7.2x4)
-    * 3 panels: plot_approx_ratio_tripanel.py (10x4, suptitle centered on
-      the middle panel)
+    * 1 panel: 7.0x4.8, with signed-percent annotations
+    * 2 panels: 7.2x4
+    * 3 panels: 10x4, with the figure title centered on the middle panel
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -319,7 +314,6 @@ def render_ratio_panels(
     save_path = Path(save_path)
 
     if len(panels) == 1:
-        # Legacy single-panel refined_rq_ratio layout.
         mat = panel_mats[0]
         if np.isfinite(mat).sum() == 0:
             raise ValueError("no finite percentage-difference values available for plotting")
@@ -660,7 +654,7 @@ def figure_tripanel(
         if "missing required columns" in str(exc):
             raise ValueError(
                 f"refined CSV lacks the secondary/HG columns needed for the tripanel "
-                f"({exc}); it was probably written by an old refined-only run. "
+                f"({exc}). "
                 f"Regenerate it with: scripts/run_grid.py --method refined --force-rerun"
             ) from exc
         raise

@@ -17,8 +17,7 @@ Code for the numerical experiments and figures of `Robust Queueing for Single-Se
 ## Prerequisites
 
 - CMake >= 3.20, a C++20 compiler
-- Python >= 3.9 with `matplotlib` and `numpy` — `pip install -r requirements.txt` (it excludes matplotlib 3.11.0, whose usetex PDF output drops minus signs; the plotting code detects that build and falls back to mathtext with a warning, losing the LaTeX text rendering)
-- A LaTeX installation with `latex` on PATH for LaTeX-rendered figure text (otherwise the plots fall back to mathtext Computer Modern)
+- Python >= 3.9 with `matplotlib` and `numpy` (avoid matplotlib 3.11.0 for LaTeX-rendered figures: its usetex PDF output drops minus signs; the plotting code detects this and falls back to mathtext with a warning)
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -31,13 +30,13 @@ C++ binaries produced: `wck` (one `w_{c,k}(t)` curve), `wck_sweep` (matrix table
 
 ```bash
 python3 reproduce.py --list        # targets + cost estimates
-python3 reproduce.py all           # the five paper figures (12 PDFs)
+python3 reproduce.py all           # five paper figure groups (22 PDFs)
 python3 reproduce.py fig:MM1_GI    # or by alias: mm1-gi; other figures: var-approx, mgi1-gi, gigi1-gi, qis
 python3 reproduce.py tables        # w/b tables for k = 1, 2, 3
 python3 reproduce.py aux           # every non-paper artifact in results/
 ```
 
-`reproduce.py` handles the dependency chain automatically (build → w/b tables → workload MC grid → refined-RQ grid → figure) and reuses existing outputs; add `--force` to regenerate. A provenance warning is printed when an existing CSV disagrees with its config (e.g. different replication count or seed).
+`reproduce.py` handles the dependency chain automatically (build → w/b tables → workload MC grid → refined/first-RQ grids → figures) and reuses existing outputs; add `--force` to regenerate. Effective-IDW simulations are reused when their curve CSVs are complete, while their lightweight PDF plots are recreated whenever the target is selected. A provenance warning is printed when an existing CSV disagrees with its config (e.g. different replication count or seed).
 
 **Smoke test** (minutes; writes to `results_quick/` — reads the production w/b tables but never writes to `results/`):
 
@@ -81,10 +80,10 @@ Notes:
 | TeX figure | Output PDFs | Models |
 |---|---|---|
 | `fig:Var_approx` | `idw_effective_{h2m1m,h2m1e2}.pdf` | effective-IDW sims, `H2(4)/M/1+{M,E2}` |
-| `fig:MM1_GI` | `approx_ratio_tripanel_{mm1m,mm1e2,mm1h2_4}.pdf` | `M/M/1+{M,E2,H2(4)}` |
-| `fig:MGI1_GI` | `approx_ratio_tripanel_{mln1_41h2_4,mln1_41e2}.pdf` | `M/LN(1,4)/1+{H2(4),E2}` |
-| `fig:GIGI1_GI` | `approx_ratio_tripanel_{e2ln1_21e2,h2_4ln1_21h2_4,h2_4ln1_21e2}.pdf` | `{E2,H2(4)}/LN(1,2)/1+{E2,H2(4)}` |
-| `fig:QIS` | `approx_ratio_tripanel_tandem_*.pdf` | tandem `GI/GI/1 -> ./M/1+GI` |
+| `fig:MM1_GI` | `approx_ratio_{tripanel,twopanel}_{mm1m,mm1e2,mm1h2_4}.pdf` | `M/M/1+{M,E2,H2(4)}` |
+| `fig:MGI1_GI` | `approx_ratio_{tripanel,twopanel}_{mln1_41h2_4,mln1_41e2}.pdf` | `M/LN(1,4)/1+{H2(4),E2}` |
+| `fig:GIGI1_GI` | `approx_ratio_{tripanel,twopanel}_{e2ln1_21e2,h2_4ln1_21h2_4,h2_4ln1_21e2}.pdf` | `{E2,H2(4)}/LN(1,2)/1+{E2,H2(4)}` |
+| `fig:QIS` | `approx_ratio_{tripanel,twopanel}_tandem_*.pdf` | tandem `GI/GI/1 -> ./M/1+GI` |
 
 ## Running individual experiments
 
