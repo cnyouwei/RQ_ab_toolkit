@@ -11,13 +11,13 @@ Code for the numerical experiments and figures of `Robust Queueing for Single-Se
 | `scripts/`      | Thin CLIs: `run_grid.py`, ratio/IDW plots, first-RQ and table-calibration diagnostics, and grid generation |
 | `src/`, `include/` | C++: `w_{c,k}(t)` PDE solver, `b(c)` calibration, MC simulators |
 | `configs/`      | Model configs (`workload_*.json`, `effective_idw_*.json`) and the 391-tuple grid |
-| `results/`      | All generated tables, CSVs, and figures |
+| `results/`      | Generated/cached tables, CSVs, and figures (gitignored) |
 | `tests/`        | C++ and Python test suites |
 
 ## Prerequisites
 
 - CMake >= 3.20, a C++20 compiler
-- Python >= 3.9 with `matplotlib` and `numpy` (avoid matplotlib 3.11.0 for LaTeX-rendered figures: its usetex PDF output drops minus signs; the plotting code detects this and falls back to mathtext with a warning)
+- Python >= 3.10 with `matplotlib` and `numpy` (avoid matplotlib 3.11.0 for LaTeX-rendered figures: its usetex PDF output drops minus signs; the plotting code detects this and falls back to mathtext with a warning)
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -35,12 +35,12 @@ python3 reproduce.py fig:MM1_GI    # or by alias: mm1-gi; other figures: var-app
 python3 reproduce.py first-b       # standardized first-RQ b_k(q), k = 1,2,3
 python3 reproduce.py refined-b     # table-calibrated refined-RQ b_k(c), k = 1,2,3
 python3 reproduce.py tables        # w/b tables for k = 1, 2, 3
-python3 reproduce.py aux           # every non-paper artifact in results/
+python3 reproduce.py aux           # full plot set: all 15 models, six IDW configs, diagnostics
 ```
 
 `reproduce.py` handles the dependency chain automatically (build → w/b tables → workload MC grid → refined/first-RQ grids → figures) and reuses existing outputs; add `--force` to regenerate. Effective-IDW simulations are reused when their curve CSVs are complete, while their lightweight PDF plots are recreated whenever the target is selected. A provenance warning is printed when an existing CSV disagrees with its config (e.g. different replication count or seed).
 
-**Smoke test** (minutes; writes to `results_quick/` — reads the production w/b tables but never writes to `results/`):
+**Smoke test** (minutes; writes to `results_quick/` — reuses cached production w/b tables when available but never writes to `results/`):
 
 ```bash
 python3 reproduce.py --quick all
@@ -75,11 +75,11 @@ Notes:
 - `simulation.threads` in the `effective_idw_*.json` configs (and the `idw_sim --threads` override) parallelizes the per-shift estimation inside the already-allocated arrays, so it trades wall time only — peak memory and results are identical for any thread count. `reproduce.py --threads` reaches only the `workload_mc` grid runs, never `idw_sim`.
 - `--quick` rewrites `sample_time` to 1e5 (and shrinks `warmup_time` and `max_level`), so the smoke test peaks at ~30 MB.
 - The other figure targets (`fig:MM1_GI`, `fig:MGI1_GI`, `fig:GIGI1_GI`, `fig:QIS`, `tables`) are memory-trivial: `workload_mc` and the table solvers peak in the tens of MB, plus ordinary Python/matplotlib overhead.
-- If the per-alpha `model0_*_curve.csv` files from an earlier run are already in `results/`, the `idw_sim` step is skipped entirely (unless `--force`).
+- If the per-alpha `model0_*_curve.csv` files are cached in `results/`, the `idw_sim` step is skipped entirely (unless `--force`).
 
 ### Figure → experiment map
 
-| TeX figure | Output PDFs | Models |
+| Figure target | Output PDFs | Models |
 |---|---|---|
 | `fig:Var_approx` | `idw_effective_{h2m1m,h2m1e2}.pdf` | effective-IDW sims, `H2(4)/M/1+{M,E2}` |
 | `fig:MM1_GI` | `approx_ratio_{tripanel,twopanel}_{mm1m,mm1e2,mm1h2_4}.pdf` | `M/M/1+{M,E2,H2(4)}` |
@@ -132,7 +132,7 @@ Single simulator runs (bypassing the grid drivers):
 
 ## Reproducibility
 
-- Every simulation seed lives in the config (`simulation.seed`, default 123456789); per-replication seeds are derived deterministically from (seed, model name, lambda, alpha, replication index), so results are independent of `--threads` and reproducible run-to-run.
+- Each simulation has a configurable base seed (`simulation.seed`, default 123456789). Workload-MC replication seeds hash that seed, the model name, the exact lambda/alpha values, the replication index, and—for tandem models—the queue-1 traffic intensity. Effective-IDW run seeds use the base seed, model index/name, and alpha index. Both simulators are reproducible across runs and thread counts.
 - The analytic (refined/first RQ, WG/Hazard/HG) grids are deterministic.
 - `results/w_table_matrix_k*.csv` and `results/b_table_k*.csv` are inputs to the refined RQ; regenerate them with `python3 reproduce.py tables --force`.
 

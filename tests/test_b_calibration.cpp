@@ -19,7 +19,8 @@ namespace {
 std::filesystem::path write_w_table_matrix_csv(
     const std::filesystem::path& dir,
     int k,
-    const std::vector<double>& c_values) {
+    const std::vector<double>& c_values,
+    double positive_time_scale = 1.0) {
     const std::vector<double> t_values{0.0, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0};
     const std::filesystem::path path = dir / ("w_table_matrix_k" + std::to_string(k) + ".csv");
 
@@ -42,7 +43,7 @@ std::filesystem::path write_w_table_matrix_csv(
             if (t > 0.0) {
                 const double c_factor = std::exp(-0.04 * std::max(c, 0.0));
                 const double t_factor = std::exp(-0.06 * std::log1p(t));
-                w = c_factor * t_factor;
+                w = positive_time_scale * c_factor * t_factor;
             }
             out << "," << w;
         }
@@ -149,9 +150,6 @@ void test_exact_calibration_residual() {
     expect(result.rows.size() == c_grid.size(), "exact residual test: row count mismatch");
 
     for (const auto& row : result.rows) {
-        expect(
-            row.status == wck::BCalibrationStatus::kExact,
-            "exact residual test: expected exact status");
         const double rhs_sup = exact_rhs_sup_from_row(row, w_table, 1, result.beta, result.tau);
         const double residual = std::abs(rhs_sup - row.psi);
         expect(residual < 1e-6, "exact residual test: residual too large");
@@ -167,27 +165,28 @@ void test_infeasible_k_gt_1_uses_zero_fallback() {
     expect(result.rows.size() == 1U, "zero fallback test: expected one row");
 
     const auto& row = result.rows.front();
-    expect(row.status == wck::BCalibrationStatus::kExact, "zero fallback test: expected exact status");
     expect_close(row.b, 0.0, 1e-12, "zero fallback test: expected b=0");
+    expect(row.a_psi >= -1e-12, "zero fallback test: expected infeasible exact match");
     expect(std::isfinite(row.psi), "zero fallback test: psi should be finite");
     expect(std::isfinite(row.z_model), "zero fallback test: z_model should be finite");
     expect(std::isfinite(row.abs_error), "zero fallback test: abs_error should be finite");
     expect(!std::isfinite(row.u_star), "zero fallback test: u_star should be nan");
 }
 
-void test_value_is_capped_at_sqrt2_for_large_c() {
+void test_exact_value_is_capped_at_sqrt2() {
     const auto dir = make_temp_dir("wck_b_calib_cap_sqrt2");
-    const auto w_table_path = write_w_table_matrix_csv(dir, 1, {-6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0});
+    // Small positive-time w values force the feasible optimum above the cap.
+    const auto w_table_path = write_w_table_matrix_csv(
+        dir,
+        1,
+        {-6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0},
+        1e-8);
     const wck::WTableInterpolator w_table = wck::WTableInterpolator::from_matrix_csv(w_table_path);
 
-    // c=8: closed-form a_psi = -phi(c)/Phi(c) ~ -5e-15 is above the -1e-12
-    // infeasibility threshold, so the k=1 fallback b=sqrt(2) applies. (At
-    // c=7, a_psi ~ -9.1e-12 still selects the exact branch, whose b depends
-    // on the toy w-table.)
-    const wck::BCalibrationResult result = wck::calibrate_b_table(1, std::vector<double>{8.0}, w_table, 1U);
+    const wck::BCalibrationResult result = wck::calibrate_b_table(1, std::vector<double>{5.0}, w_table, 1U);
     expect(result.rows.size() == 1U, "cap test: expected one row");
     const auto& row = result.rows.front();
-    expect(row.status == wck::BCalibrationStatus::kExact, "cap test: expected exact status");
+    expect(row.a_psi < -1e-12, "cap test: expected a feasible exact match");
     expect_close(row.b, std::sqrt(2.0), 1e-12, "cap test: expected capped b=sqrt(2)");
     expect(!std::isfinite(row.u_star), "cap test: expected u_star to be nan for capped row");
 }
@@ -200,38 +199,9 @@ void test_infeasible_k_eq_1_uses_sqrt2_fallback() {
     const wck::BCalibrationResult result = wck::calibrate_b_table(1, std::vector<double>{20.0}, w_table, 1U);
     expect(result.rows.size() == 1U, "k1 fallback test: expected one row");
     const auto& row = result.rows.front();
-    expect(row.status == wck::BCalibrationStatus::kExact, "k1 fallback test: expected exact status");
+    expect(row.a_psi >= -1e-12, "k1 fallback test: expected infeasible exact match");
     expect_close(row.b, std::sqrt(2.0), 1e-12, "k1 fallback test: expected b=sqrt(2)");
     expect(!std::isfinite(row.u_star), "k1 fallback test: expected u_star to be nan");
-}
-
-void test_csv_roundtrip_and_lookup() {
-    const auto dir = make_temp_dir("wck_b_calib_roundtrip");
-    const auto w_table_path = write_w_table_matrix_csv(dir, 1, {-6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0});
-    const wck::WTableInterpolator w_table = wck::WTableInterpolator::from_matrix_csv(w_table_path);
-
-    const std::vector<double> c_grid{-2.0, -1.0, 0.0};
-    const wck::BCalibrationResult result = wck::calibrate_b_table(1, c_grid, w_table, 1U);
-
-    const std::filesystem::path csv_path = dir / "b_table_k1.csv";
-    wck::write_b_calibration_table_csv(csv_path, result);
-    const wck::BCalibrationTable loaded = wck::load_b_calibration_table_csv(csv_path);
-
-    for (const auto& row : result.rows) {
-        const double value = loaded.evaluate(row.c);
-        expect_close(value, row.b, 1e-12, "roundtrip test: gridpoint evaluation mismatch");
-    }
-
-    const double mid = 0.5 * (result.rows[0].c + result.rows[1].c);
-    const double expected_mid = 0.5 * (result.rows[0].b + result.rows[1].b);
-    const double mid_val = loaded.evaluate(mid);
-    expect_close(mid_val, expected_mid, 1e-12, "roundtrip test: midpoint interpolation mismatch");
-
-    const double left_val = loaded.evaluate(-1e6);
-    expect_close(left_val, std::sqrt(2.0), 1e-12, "roundtrip test: left extrapolation mismatch");
-
-    const double right_val = loaded.evaluate(1e6);
-    expect_close(right_val, result.rows.back().b, 1e-12, "roundtrip test: right extrapolation mismatch");
 }
 
 void test_calibration_cli_smoke() {
@@ -259,7 +229,7 @@ void test_calibration_cli_smoke() {
     }
     expect(!lines.empty(), "cli smoke test: empty output CSV");
     expect(
-        lines[0] == "c,b,status,psi,z_model,abs_error,a_psi,u_star",
+        lines[0] == "c,b,psi,z_model,abs_error,a_psi,u_star",
         "cli smoke test: header mismatch");
     expect(lines.size() == 4U, "cli smoke test: unexpected row count");
 }
@@ -270,8 +240,7 @@ void run_b_calibration_tests() {
     test_psi_against_mm1m_closed_form();
     test_exact_calibration_residual();
     test_infeasible_k_gt_1_uses_zero_fallback();
-    test_value_is_capped_at_sqrt2_for_large_c();
+    test_exact_value_is_capped_at_sqrt2();
     test_infeasible_k_eq_1_uses_sqrt2_fallback();
-    test_csv_roundtrip_and_lookup();
     test_calibration_cli_smoke();
 }

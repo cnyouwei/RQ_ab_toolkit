@@ -303,8 +303,7 @@ class WTableInterpolator:
 class BCalibrationInterpolator:
     """Linear interpolation of b(c) from a wck_calibrate_b CSV.
 
-    Below the c-grid b -> sqrt(2) (the underloaded limit); above it the last
-    table value is held constant.
+    Below the c-grid, returns sqrt(2); above it, holds the last table value.
     """
 
     def __init__(self, c_values: list[float], b_values: list[float]) -> None:

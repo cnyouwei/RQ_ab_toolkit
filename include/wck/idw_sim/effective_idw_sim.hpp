@@ -12,16 +12,6 @@
 
 namespace wck {
 
-struct H2Params {
-    double p = 0.0;
-    double mu1 = 0.0;
-    double mu2 = 0.0;
-    double gamma = 0.0;
-    double beta = 0.0;
-};
-
-H2Params recover_h2_params(double rate, double scv, double r);
-
 struct EffectiveIdwEstimate {
     double tau = 0.0;
     double tau_shift = 0.0;

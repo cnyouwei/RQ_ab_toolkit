@@ -1,10 +1,4 @@
-"""Diagnostic figures for the w_{c,k}(t) and b(c) tables.
-
-Ports of the old scripts plot_w_overlay_k.py (w_overlay_k{k}.png),
-plot_b_calibration.py (b_calibration_k{k}.png) and plot_w.py
-(single-curve w(t) plots).  Pure plotting: tables/CSVs must already
-exist; nothing is generated here.
-"""
+"""Diagnostic figures for the w and calibrated-b tables."""
 from __future__ import annotations
 
 import csv
@@ -20,6 +14,8 @@ from ..tables import (
 )
 from ..util import RESULTS_DIR
 from .calibration_tripanel import CalibrationPlotCurve, render_calibration_tripanel
+
+_FEASIBILITY_THRESHOLD = -1e-12
 
 
 def plot_w_overlay(
@@ -202,32 +198,6 @@ def plot_w_tripanel(
     return out
 
 
-def _read_b_table_with_status(csv_path: Path) -> tuple[list[float], list[float], list[str]]:
-    if not csv_path.exists():
-        raise FileNotFoundError(f"calibration table not found: {csv_path}")
-
-    c_values: list[float] = []
-    b_values: list[float] = []
-    status_values: list[str] = []
-
-    with csv_path.open("r", newline="") as handle:
-        reader = csv.DictReader(handle)
-        if reader.fieldnames is None:
-            raise ValueError("CSV is empty or missing header")
-        required = {"c", "b", "status"}
-        if not required.issubset(set(reader.fieldnames)):
-            raise ValueError("CSV must contain columns: c,b,status")
-
-        for row in reader:
-            c_values.append(float(row["c"]))
-            b_values.append(float(row["b"]))
-            status_values.append(str(row["status"]).strip())
-
-    if not c_values:
-        raise ValueError("CSV has no data rows")
-    return c_values, b_values, status_values
-
-
 def plot_b_calibration(
     k: int,
     table_path: Path | None = None,
@@ -235,97 +205,30 @@ def plot_b_calibration(
     dpi: int = 180,
     no_show: bool = True,
 ) -> Path:
-    """Plot calibrated b(c) for a fixed k from b_table_k{k}.csv.
-
-    Segments are colored by calibration status (exact / best_fit) with a
-    sqrt(2) reference line.  Output default: results/b_calibration_k{k}.png
-    """
+    """Plot one calibrated b(c) table with its fallback region."""
     if k < 1:
         raise ValueError("k must be >= 1")
 
     table = Path(table_path) if table_path is not None else default_b_table_path(k)
-    c_values, b_values, status_values = _read_b_table_with_status(table)
-
-    import matplotlib.pyplot as plt
-
-    points = sorted(zip(c_values, b_values, status_values), key=lambda x: x[0])
-    c_sorted = [p[0] for p in points]
-    sqrt2 = math.sqrt(2.0)
-    b_sorted = [p[1] for p in points]
-    s_sorted = [p[2] for p in points]
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    style_by_status = {
-        "exact": ("tab:blue", "-"),
-        "best_fit": ("tab:red", "--"),
-    }
-    shown_labels: set[str] = set()
-    start = 0
-    while start < len(c_sorted):
-        status = s_sorted[start]
-        end = start
-        while end + 1 < len(c_sorted) and s_sorted[end + 1] == status:
-            end += 1
-
-        color, linestyle = style_by_status.get(status, ("tab:gray", "-."))
-        label = status if status not in shown_labels else None
-        ax.plot(
-            c_sorted[start : end + 1],
-            b_sorted[start : end + 1],
-            linewidth=2.0,
-            color=color,
-            linestyle=linestyle,
-            label=label,
-        )
-        if label is not None:
-            shown_labels.add(status)
-        start = end + 1
-
-    ax.axhline(sqrt2, color="gray", linestyle="--", linewidth=1.2, label=r"$\sqrt{2}$")
-    ax.set_xlabel("c")
-    ax.set_ylabel("b")
-    ax.set_title(f"Calibrated b(c) for k={k}")
-    ax.grid(True, alpha=0.35)
-    ax.legend()
-    fig.tight_layout()
-
+    curve = _read_b_curve(table)
     out = Path(save_path) if save_path is not None else RESULTS_DIR / f"b_calibration_k{k}.png"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=dpi)
-    print(f"Saved plot: {out}")
-    if not no_show:
-        plt.show()
-    return out
-
-
-def plot_b_overlay(
-    ks: Sequence[int] = (1, 2, 3),
-    table_paths: Sequence[Path | None] | None = None,
-    save_path: Path | None = None,
-    no_show: bool = True,
-) -> Path:
-    """Compatibility entry point for the refined-RQ calibration tripanel.
-
-    The historical API name said "overlay".  It now uses the shared tripanel
-    style and the canonical refined-RQ tripanel output name.
-    """
-    return plot_refined_b_tripanel(
-        ks=ks,
-        table_paths=table_paths,
-        save_path=save_path,
+    return render_calibration_tripanel(
+        ks=(k,),
+        curves=(curve,),
+        x_min=curve.x[0],
+        x_max=curve.x[-1],
+        x_label=r"drift $c$",
+        y_label=rf"calibrated $b_{k}(c)$",
+        calibrated_label="calibrated branch",
+        fallback_label="infeasible-match fallback",
+        save_path=out,
         no_show=no_show,
+        dpi=dpi,
     )
 
 
-def _read_refined_b_curve(csv_path: Path) -> CalibrationPlotCurve:
-    """Load a refined-RQ b table and identify its true fallback rows.
-
-    Current calibration tables retain ``status=exact`` for the explicit
-    infeasible-match fallback, so the branch is identified by the same
-    ``a_psi >= -1e-12`` predicate as the calibrator.  Capped k=1 rows remain
-    on the calibrated branch.  Legacy ``best_fit`` rows are also treated as
-    fallback rows; tables without ``a_psi`` retain their status-only behavior.
-    """
+def _read_b_curve(csv_path: Path) -> CalibrationPlotCurve:
+    """Load a b table and mark rows where exact matching is infeasible."""
     if not csv_path.exists():
         raise FileNotFoundError(f"calibration table not found: {csv_path}")
 
@@ -334,19 +237,13 @@ def _read_refined_b_curve(csv_path: Path) -> CalibrationPlotCurve:
         reader = csv.DictReader(handle)
         if reader.fieldnames is None:
             raise ValueError("CSV is empty or missing header")
-        required = {"c", "b", "status"}
+        required = {"c", "b", "a_psi"}
         if not required.issubset(set(reader.fieldnames)):
-            raise ValueError("CSV must contain columns: c,b,status")
-        has_a_psi = "a_psi" in reader.fieldnames
+            raise ValueError("CSV must contain columns: c,b,a_psi")
 
         for row in reader:
-            status = str(row["status"]).strip().lower()
-            if status not in {"exact", "best_fit"}:
-                raise ValueError(f"unknown calibration status: {status}")
-            a_psi = float(row["a_psi"]) if has_a_psi else float("nan")
-            fallback = status == "best_fit" or (
-                math.isfinite(a_psi) and a_psi >= -1e-12
-            )
+            a_psi = float(row["a_psi"])
+            fallback = math.isfinite(a_psi) and a_psi >= _FEASIBILITY_THRESHOLD
             rows.append((float(row["c"]), float(row["b"]), fallback))
 
     if not rows:
@@ -384,7 +281,7 @@ def plot_refined_b_tripanel(
             raise ValueError("k must be >= 1")
         override = table_paths[i] if table_paths is not None else None
         table = Path(override) if override is not None else default_b_table_path(k)
-        curves.append(_read_refined_b_curve(table))
+        curves.append(_read_b_curve(table))
 
     table_min = max(curve.x[0] for curve in curves)
     table_max = min(curve.x[-1] for curve in curves)
@@ -413,73 +310,3 @@ def plot_refined_b_tripanel(
         save_path=out,
         no_show=no_show,
     )
-
-
-def plot_w_curves(
-    csv_paths: Sequence[Path],
-    save: Path | None = None,
-    no_show: bool = True,
-) -> None:
-    """Plot one or more single-curve w_{c,k}(t) CSVs (columns t,w) on log-x.
-
-    Folds in the old scripts/plot_w.py single-curve plot; with several
-    paths the curves are overlaid and labeled by file stem.
-    """
-    if not csv_paths:
-        raise ValueError("plot_w_curves needs at least one CSV path")
-
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    y_all: list[float] = []
-    for raw_path in csv_paths:
-        csv_path = Path(raw_path)
-        if not csv_path.exists():
-            raise FileNotFoundError(f"CSV not found: {csv_path}")
-
-        t_values: list[float] = []
-        w_values: list[float] = []
-        with csv_path.open("r", newline="") as handle:
-            reader = csv.DictReader(handle)
-            if reader.fieldnames is None:
-                raise ValueError("CSV is empty or missing header.")
-            if "t" not in reader.fieldnames or "w" not in reader.fieldnames:
-                raise ValueError("CSV header must contain columns: t,w")
-            for row in reader:
-                t_values.append(float(row["t"]))
-                w_values.append(float(row["w"]))
-        if not t_values:
-            raise ValueError("CSV has no data rows.")
-
-        # log-x plot excludes t=0 from the line, if present.
-        t_positive = [t for t in t_values if t > 0.0]
-        w_positive = [w for t, w in zip(t_values, w_values) if t > 0.0]
-        if not t_positive:
-            raise ValueError("No positive t values found. Cannot plot on log x-axis.")
-
-        ax.plot(t_positive, w_positive, linewidth=2.0, label=csv_path.stem)
-        y_all.extend(w_positive)
-        if any(t == 0.0 for t in t_values):
-            y_all.append(w_values[t_values.index(0.0)])
-
-    ax.set_xscale("log")
-    ax.set_xlabel("t")
-    ax.set_ylabel("w")
-    ax.set_title(r"$w_{c,k}(t)$")
-    ax.grid(True, which="both", alpha=0.35)
-    y_min = min(y_all)
-    y_max = max(y_all)
-    span = max(1e-9, y_max - y_min)
-    pad = 0.05 * span
-    ax.set_ylim(y_min - pad, y_max + pad)
-    ax.legend()
-    fig.tight_layout()
-
-    if save is not None:
-        out = Path(save)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(out, dpi=180)
-        print(f"Saved plot: {out}")
-
-    if not no_show:
-        plt.show()

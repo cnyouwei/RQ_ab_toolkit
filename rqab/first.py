@@ -1,8 +1,8 @@
-"""First (crude) RQ approximation of RQ_ab.tex (eq:RQ_ab_1).
+"""First (crude) robust-queueing approximation.
 
     Z = sup_{u >= 0} { rho*u - u/barF_alpha(Z) + b*sqrt((rho*u/mu) * I_w(lambda*u)) },
 
-with I_w(lambda*u) = I_a(u) + c_s^2 the crude IDW (eq:IDW_first_RQ); for
+with I_w(lambda*u) = I_a(u) + c_s^2 the crude IDW; for
 tandem models I_a is the queue-1 departure IDC.  The robustness parameter b
 is calibrated per tuple at the standardized load coordinate
 
@@ -264,36 +264,6 @@ def calibrate_b_first_rq_standardized(tilde_c: float, k: int) -> FirstCalibratio
     if not (b >= 0.0 and math.isfinite(b)):
         raise RuntimeError("calibrated b is invalid")
     return FirstCalibration(b=b, standardized_mean=mean, status=status)
-
-
-def psi_critical(c: float, k: int, beta_patience: float) -> float:
-    """Canonical (R=1) physical heavy-traffic mean retained for compatibility."""
-    if k < 1:
-        raise ValueError("k must be >= 1")
-    if not (beta_patience > 0.0 and math.isfinite(beta_patience)):
-        raise ValueError("beta_patience must be finite and > 0")
-    if not math.isfinite(c):
-        raise ValueError("c must be finite")
-
-    scale = float(beta_patience) ** (-1.0 / float(k + 1))
-    tilde_c = float(c) * scale
-    return scale * standardized_critical_mean(tilde_c=tilde_c, k=k)
-
-
-def calibrate_b_first_rq(c: float, k: int, beta_patience: float) -> tuple[float, float]:
-    """Canonical R=1 wrapper returning the historical ``(b, psi)`` pair."""
-    if k < 1:
-        raise ValueError("k must be >= 1")
-    if not (beta_patience > 0.0 and math.isfinite(beta_patience)):
-        raise ValueError("beta_patience must be finite and > 0")
-    if not math.isfinite(c):
-        raise ValueError("c must be finite")
-    scale = float(beta_patience) ** (-1.0 / float(k + 1))
-    calibration = calibrate_b_first_rq_standardized(
-        tilde_c=float(c) * scale,
-        k=k,
-    )
-    return calibration.b, scale * calibration.standardized_mean
 
 
 @dataclass(frozen=True)

@@ -41,7 +41,8 @@ def main() -> int:
         return 2
 
     try:
-        from rqab.plotting import diagnostics
+        import matplotlib  # noqa: F401
+        import rqab.plotting.diagnostics as diagnostics
     except ModuleNotFoundError as exc:
         print(f"warning: plotting dependencies unavailable ({exc})", file=sys.stderr)
         print("skipping plot generation because plotting dependencies are unavailable.", file=sys.stderr)

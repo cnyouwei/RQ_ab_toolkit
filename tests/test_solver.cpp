@@ -64,18 +64,6 @@ void test_log_grid() {
     }
 }
 
-void test_stationary_mass() {
-    wck::SpaceGridConfig space{};
-    space.nx = 1000;
-    space.auto_x_max = true;
-    space.tail_tol = 1e-14;
-
-    double x_max_used = 0.0;
-    const double mass = wck::estimate_stationary_mass(wck::WckParams{1.0, 2}, space, &x_max_used);
-    expect(std::abs(mass - 1.0) < 2e-6, "stationary mass test: density mass not near 1");
-    expect(x_max_used > 0.0, "stationary mass test: invalid x_max");
-}
-
 void test_pde_invariants_and_scenarios() {
     auto cfg = base_test_config();
     const std::vector<wck::WckParams> scenarios{
@@ -192,10 +180,8 @@ CsvRow parse_csv_line(const std::string& line) {
 }
 
 void test_cli_output() {
-    const std::filesystem::path out_path =
-        std::filesystem::temp_directory_path() / "wck_cli_test_output.csv";
-    std::error_code ec;
-    std::filesystem::remove(out_path, ec);
+    const auto run_dir = make_temp_dir("wck_cli_output");
+    const std::filesystem::path out_path = run_dir / "output.csv";
 
     const std::string cmd =
         std::string("\"") + WCK_CLI_PATH + "\""
@@ -228,15 +214,9 @@ void test_cli_output() {
 }
 
 void test_cli_default_naming_rule() {
-    const std::filesystem::path run_dir =
-        std::filesystem::temp_directory_path() / "wck_cli_default_name_test_dir";
-    std::error_code ec;
-    std::filesystem::remove_all(run_dir, ec);
-    std::filesystem::create_directories(run_dir, ec);
-    expect(!ec, "cli default-name test: failed to create temp directory");
+    const auto run_dir = make_temp_dir("wck_cli_default_name");
 
     const std::filesystem::path expected_csv = run_dir / "results" / "wck_c0.3_k2.csv";
-    std::filesystem::remove(expected_csv, ec);
 
     const std::string cmd =
         std::string("cd \"") + run_dir.string() + "\" && \""
@@ -255,16 +235,10 @@ void test_cli_default_naming_rule() {
 }
 
 void test_cli_custom_dir_default_name() {
-    const std::filesystem::path run_dir =
-        std::filesystem::temp_directory_path() / "wck_cli_custom_dir_test_dir";
-    std::error_code ec;
-    std::filesystem::remove_all(run_dir, ec);
-    std::filesystem::create_directories(run_dir, ec);
-    expect(!ec, "cli custom-dir test: failed to create temp directory");
+    const auto run_dir = make_temp_dir("wck_cli_custom_dir");
 
     const std::filesystem::path target_dir = run_dir / "my_outputs";
     const std::filesystem::path expected_csv = target_dir / "wck_c-2_k1.csv";
-    std::filesystem::remove(expected_csv, ec);
 
     const std::string cmd =
         std::string("cd \"") + run_dir.string() + "\" && \""
@@ -286,12 +260,7 @@ bool looks_like_intermediate_wck_file(std::string_view filename) {
 }
 
 void test_sweep_cli_matrix_only_no_intermediate_files() {
-    const std::filesystem::path run_dir =
-        std::filesystem::temp_directory_path() / "wck_sweep_cli_test_dir";
-    std::error_code ec;
-    std::filesystem::remove_all(run_dir, ec);
-    std::filesystem::create_directories(run_dir, ec);
-    expect(!ec, "sweep cli test: failed to create temp directory");
+    const auto run_dir = make_temp_dir("wck_sweep_cli");
 
     const std::filesystem::path out_dir = run_dir / "tables";
     const std::filesystem::path expected_csv = out_dir / "w_table_matrix_k2.csv";
@@ -331,7 +300,6 @@ void test_sweep_cli_matrix_only_no_intermediate_files() {
 int main() {
     try {
         test_log_grid();
-        test_stationary_mass();
         test_pde_invariants_and_scenarios();
         test_upwind_stability();
         test_convergence_consistency();

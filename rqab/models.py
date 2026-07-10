@@ -204,13 +204,6 @@ def _load_config_header(path: Path) -> tuple[dict[str, Any], str, str, bool]:
     return model, name, sanitize_alias(alias), normalize_flag
 
 
-def is_tandem_config(path: Path) -> bool:
-    with path.open("r", encoding="utf-8") as handle:
-        raw = json.load(handle)
-    model = raw.get("model")
-    return isinstance(model, dict) and "queue1" in model
-
-
 def load_model_config(path: Path) -> AnyModel:
     """Load a model config, returning ParsedModel or ParsedTandemModel."""
     model, name, alias, normalize_flag = _load_config_header(path)

@@ -5,9 +5,9 @@ Methods
 -------
 workload   Monte-Carlo ground truth via the workload_mc binary
            -> results/workload_grid_aggregate_<alias>.csv
-refined    Refined RQ fixed point (RQ_ab.tex eq:RQ_ab_2) + WG/Hazard/HG
+refined    Refined RQ fixed point + WG/Hazard/HG
            benchmark columns -> results/refined_rq_grid_<alias>.csv
-first      First (crude) RQ fixed point (eq:RQ_ab_1) with standardized b_k(q)
+first      First (crude) RQ fixed point with standardized b_k(q)
            -> results/first_rq_grid_<alias>.csv
 
 Tandem models (configs with model.queue1/queue2) are detected automatically;

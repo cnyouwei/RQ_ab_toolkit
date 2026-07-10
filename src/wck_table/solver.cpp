@@ -418,21 +418,6 @@ void crank_nicolson_step(
 
 }  // namespace
 
-double estimate_stationary_mass(
-    const WckParams& params,
-    const SpaceGridConfig& config,
-    double* x_max_used) {
-    SolverConfig default_config{};
-    default_config.space = config;
-    validate_params(params, default_config);
-
-    const PreparedSpace prepared = prepare_space(params, config);
-    if (x_max_used != nullptr) {
-        *x_max_used = prepared.x_max;
-    }
-    return trapz(prepared.pi, prepared.dx);
-}
-
 SolveResult solve_w_grid(const WckParams& params, const SolverConfig& config) {
     validate_params(params, config);
 

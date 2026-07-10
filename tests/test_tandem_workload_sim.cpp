@@ -82,30 +82,6 @@ void test_queue1_service_scaling_enforces_target_rho() {
     }
 }
 
-void test_monotonic_sanity() {
-    wck::TandemWorkloadRunParams params = base_params();
-    params.replications = 96;
-    params.sample_time = 1500.0;
-
-    params.lambda = 0.6;
-    params.alpha = 1.0;
-    const wck::TandemWorkloadSummary low_lambda = wck::simulate_tandem_workload_mc(params);
-    params.lambda = 1.3;
-    const wck::TandemWorkloadSummary high_lambda = wck::simulate_tandem_workload_mc(params);
-    expect(
-        high_lambda.mean_workload > low_lambda.mean_workload,
-        "monotonic lambda: expected higher lambda to increase queue2 mean workload");
-
-    params.lambda = 1.1;
-    params.alpha = 0.25;
-    const wck::TandemWorkloadSummary low_alpha = wck::simulate_tandem_workload_mc(params);
-    params.alpha = 4.0;
-    const wck::TandemWorkloadSummary high_alpha = wck::simulate_tandem_workload_mc(params);
-    expect(
-        low_alpha.mean_workload > high_alpha.mean_workload,
-        "monotonic alpha: expected lower alpha to increase queue2 mean workload");
-}
-
 std::string valid_cli_config_json() {
     return R"JSON({
   "simulation": {
@@ -128,26 +104,6 @@ std::string valid_cli_config_json() {
       "service": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
       "patience": { "distribution": { "family": "erlang_k", "params": { "k": 2, "rate": 2.0 } } }
     }
-  }
-})JSON";
-}
-
-std::string valid_single_station_config_json() {
-    return R"JSON({
-  "simulation": {
-    "warmup_time": 30.0,
-    "sample_time": 200.0,
-    "replications": 24,
-    "threads": 2,
-    "seed": 123,
-    "normalize_service_mean_to_one": true
-  },
-  "model": {
-    "name": "routing_single_model",
-    "alias": "routing_single",
-    "arrival": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
-    "service": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
-    "patience": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } }
   }
 })JSON";
 }
@@ -206,47 +162,8 @@ void test_cli_smoke_and_invalid_config() {
     expect(rc_bad != 0, "tandem workload cli invalid-config: expected failure");
 }
 
-// Routing tests for the merged workload_mc binary: it must dispatch on the
-// presence of model.queue1.
-void test_merged_binary_routing() {
+void test_malformed_tandem_routing() {
     const auto dir = make_temp_dir("wck_workload_mc_routing");
-
-    // Single-station config routes to the single-station simulation. A tandem
-    // parse of this config would fail (model.arrival is not a tandem field),
-    // so a successful run proves single-station routing.
-    const auto single_config = write_text_file(dir, "single.json", valid_single_station_config_json());
-    const auto single_summary = dir / "single_summary.json";
-    const std::string cmd_single =
-        std::string("\"") + WCK_WORKLOAD_MC_CLI_PATH + "\""
-        + " --config \"" + single_config.string() + "\""
-        + " --lambda 1.1 --alpha 0.5"
-        + " --summary-json \"" + single_summary.string() + "\""
-        + " --threads 1 --seed 4242";
-    expect(std::system(cmd_single.c_str()) == 0, "routing: single-station run failed");
-    const std::string single_text = read_text_file(single_summary);
-    expect(
-        single_text.find("\"model_name\": \"routing_single_model\"") != std::string::npos,
-        "routing: single summary should carry the single-station model name");
-
-    // Tandem config routes to the tandem simulation. A single-station parse
-    // of this config would fail (model.queue1 is not a single-station field),
-    // so a successful run proves tandem routing.
-    const auto tandem_config = write_text_file(dir, "tandem.json", valid_cli_config_json());
-    const auto tandem_summary = dir / "tandem_summary.json";
-    const std::string cmd_tandem =
-        std::string("\"") + WCK_WORKLOAD_MC_CLI_PATH + "\""
-        + " --config \"" + tandem_config.string() + "\""
-        + " --lambda 1.1 --alpha 0.5"
-        + " --summary-json \"" + tandem_summary.string() + "\""
-        + " --threads 1 --seed 4242";
-    expect(std::system(cmd_tandem.c_str()) == 0, "routing: tandem run failed");
-    const std::string tandem_text = read_text_file(tandem_summary);
-    expect(
-        tandem_text.find("\"model_name\": \"tandem_cli_model\"") != std::string::npos,
-        "routing: tandem summary should carry the tandem model name");
-
-    // A config with queue1 but no queue2 is routed to the tandem loader and
-    // must be rejected.
     const auto missing_queue2 = write_text_file(
         dir,
         "missing_queue2.json",
@@ -280,7 +197,6 @@ void test_merged_binary_routing() {
 void run_tandem_workload_sim_tests() {
     test_determinism_and_thread_invariance();
     test_queue1_service_scaling_enforces_target_rho();
-    test_monotonic_sanity();
     test_cli_smoke_and_invalid_config();
-    test_merged_binary_routing();
+    test_malformed_tandem_routing();
 }

@@ -1,7 +1,6 @@
 #pragma once
 
-// Shared helpers for the wck test suite. Kept at global scope (inline) so the
-// per-file test bodies stay unchanged.
+// Shared helpers for the C++ tests.
 
 #include "wck/common/distributions.hpp"
 
@@ -14,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 inline void expect(bool condition, const std::string& message) {
     if (!condition) {
@@ -57,18 +57,57 @@ void expect_throw_contains(Fn&& fn, const std::string& needle, const std::string
     throw std::runtime_error(message + " (did not throw)");
 }
 
-inline std::filesystem::path make_temp_dir(const std::string& tag) {
-    std::mt19937_64 rng(static_cast<std::uint64_t>(std::hash<std::string>{}(tag)));
-    const std::filesystem::path dir =
-        std::filesystem::temp_directory_path() / (tag + "_" + std::to_string(rng()));
+class TempDir {
+public:
+    explicit TempDir(const std::string& tag) {
+        std::mt19937_64 rng(static_cast<std::uint64_t>(std::hash<std::string>{}(tag)));
+        path_ = std::filesystem::temp_directory_path() / (tag + "_" + std::to_string(rng()));
 
-    std::error_code ec;
-    std::filesystem::remove_all(dir, ec);
-    std::filesystem::create_directories(dir, ec);
-    if (ec) {
-        throw std::runtime_error("failed to create temp dir: " + dir.string());
+        std::error_code ec;
+        std::filesystem::remove_all(path_, ec);
+        if (ec) {
+            throw std::runtime_error("failed to clear temp dir: " + path_.string());
+        }
+        std::filesystem::create_directories(path_, ec);
+        if (ec) {
+            throw std::runtime_error("failed to create temp dir: " + path_.string());
+        }
     }
-    return dir;
+
+    ~TempDir() {
+        if (!path_.empty()) {
+            std::error_code ec;
+            std::filesystem::remove_all(path_, ec);
+        }
+    }
+
+    TempDir(const TempDir&) = delete;
+    TempDir& operator=(const TempDir&) = delete;
+
+    TempDir(TempDir&& other) noexcept : path_(std::move(other.path_)) {
+        other.path_.clear();
+    }
+
+    TempDir& operator=(TempDir&&) = delete;
+
+    operator const std::filesystem::path&() const noexcept {
+        return path_;
+    }
+
+    std::string string() const {
+        return path_.string();
+    }
+
+    friend std::filesystem::path operator/(const TempDir& dir, const std::filesystem::path& child) {
+        return dir.path_ / child;
+    }
+
+private:
+    std::filesystem::path path_{};
+};
+
+inline TempDir make_temp_dir(const std::string& tag) {
+    return TempDir(tag);
 }
 
 inline std::filesystem::path write_text_file(

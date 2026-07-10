@@ -1,4 +1,4 @@
-"""Refined RQ approximation (RQ_ab.tex eq:RQ_ab_2) over a tuple grid.
+"""Refined robust-queueing approximation over a tuple grid.
 
 The combined output row also carries the WG/Hazard/HG benchmark columns
 (computed independently, so a refined-solver failure does not blank them).
@@ -23,7 +23,7 @@ from .fixed_point import (
 )
 from .idc import arrival_idc_curve_for
 from .models import AnyModel, BaseSystemStats
-from .secondary import QuadOptions, SecondaryStats, build_secondary_stats, solve_secondary
+from .secondary import QuadOptions, build_secondary_stats, solve_secondary
 from .tables import BCalibrationInterpolator, WTableInterpolator
 from .util import require_float, require_int, require_str
 
@@ -163,7 +163,7 @@ class RefinedSolver:
         else:
             c_a2_effective = base.c_a2
 
-        hat = hat_idw_refined(t=self.s_grid, ia_t=ia, rho=rho, c_s2=base.c_s2)
+        hat = hat_idw_refined(ia_t=ia, rho=rho, c_s2=base.c_s2)
         hat_values = [float(v) for v in hat] if isinstance(hat, list) else [float(hat)]
         if len(hat_values) != len(self.s_grid):
             raise RuntimeError("internal error: hat_Iw curve length mismatch")

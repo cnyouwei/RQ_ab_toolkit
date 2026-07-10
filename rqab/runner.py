@@ -61,12 +61,8 @@ def run_analytic_grid(
         print(f"Output already exists, skipping (use --force-rerun to overwrite): {out_csv}")
         return 0
 
-    # Write to a staging file and move into place on success so an
-    # interrupted run never leaves a truncated CSV at the final path (which
-    # skip-if-exists logic would silently reuse).  The staging file lives in
-    # the system temp dir, NOT next to out_csv: results/ may be inside a
-    # cloud-synced folder (Dropbox), whose sync engine can revert an in-place
-    # rename that races an in-flight upload of the staging file.
+    # Stage outside cloud-synced output folders, then move into place only
+    # after success so interrupted runs cannot leave reusable partial CSVs.
     partial_csv = _staging_path(out_csv)
     start = time.time()
     with partial_csv.open("w", newline="", encoding="utf-8") as handle:
@@ -142,9 +138,7 @@ def run_workload_grid(
         temp_ctx = tempfile.TemporaryDirectory(prefix="rqab_workload_grid_")
         summary_dir = Path(temp_ctx.name)
 
-    # Same staging protocol as run_analytic_grid: an interrupted MC run must
-    # not leave a truncated CSV where skip-if-exists would find it, and the
-    # staging file must live outside any cloud-synced folder.
+    # Use the same success-only staging protocol as the analytic grid.
     partial_csv = _staging_path(out_csv)
     try:
         start = time.time()

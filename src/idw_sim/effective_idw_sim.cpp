@@ -84,51 +84,6 @@ void append_drops(
 
 }  // namespace
 
-H2Params recover_h2_params(double rate, double scv, double r) {
-    if (!(rate > 0.0)) {
-        throw std::invalid_argument("H2 rate must be > 0");
-    }
-    if (!(scv >= 1.0)) {
-        throw std::invalid_argument("H2 scv must be >= 1");
-    }
-    if (!(r > 0.0 && r < 1.0)) {
-        throw std::invalid_argument("H2 r must be in (0,1)");
-    }
-
-    const double a = 0.5 * (scv + 1.0);
-    const double b = a - 1.0 + 2.0 * r;
-    double disc = b * b - 4.0 * a * r * r;
-    if (disc < -1e-13) {
-        throw std::invalid_argument("invalid (scv, r): no real H2 branch");
-    }
-    if (disc < 0.0) {
-        disc = 0.0;
-    }
-    const double sqrt_disc = std::sqrt(disc);
-
-    const std::vector<double> candidates{
-        (b + sqrt_disc) / (2.0 * a),
-        (b - sqrt_disc) / (2.0 * a),
-    };
-
-    for (const double p : candidates) {
-        if (!(p > 1e-13 && p < 1.0 - 1e-13)) {
-            continue;
-        }
-        const double mu1 = rate * p / r;
-        const double mu2 = rate * (1.0 - p) / (1.0 - r);
-        if (mu1 + 1e-13 < mu2) {
-            continue;
-        }
-
-        const double gamma = (1.0 - p) * mu1 + p * mu2;
-        const double beta = p * (1.0 - p) * (mu1 - mu2) * (mu1 - mu2) / (gamma * gamma);
-        return H2Params{p, mu1, mu2, gamma, beta};
-    }
-
-    throw std::invalid_argument("failed to recover valid H2 parameters with mu1 >= mu2");
-}
-
 std::vector<EffectiveIdwEstimate> estimate_effective_idw_from_bins(
     std::vector<double> bins,
     const EstimatorConfig& config,

@@ -1,9 +1,7 @@
-"""Benchmark approximations: Ward-Glynn (WG), hazard-rate scaling, Huang-Gurvich (HG).
+"""Ward-Glynn, hazard-rate-scaling, and Huang-Gurvich benchmarks.
 
-These are the comparison methods in RQ_ab.tex Section "Comparison with other
-approximations" / Appendix A.  The secondary method is WG when the patience
-density is positive at zero (f(0) > 0), otherwise the hazard-rate scaling
-approximation.  HG is always computed.
+The secondary method is WG when the patience density is positive at zero;
+otherwise it is hazard-rate scaling. HG is always computed.
 """
 from __future__ import annotations
 
@@ -180,7 +178,7 @@ def inverse_mills_ratio_upper(x: float) -> float:
 
 
 def compute_wg(lam: float, alpha: float, stats: SecondaryStats) -> tuple[float, str]:
-    """Ward-Glynn truncated-normal ROU mean (RQ_ab.tex eq:ROU_expectation)."""
+    """Return the Ward-Glynn truncated-normal workload approximation."""
     if not (alpha > 0.0):
         raise ValueError(f"invalid alpha={alpha}; expected > 0")
     if not (lam > 0.0):

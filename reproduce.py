@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproduce the numerical figures of RQ_ab.tex.
+"""Reproduce the numerical figures for Robust Queueing with Abandonment.
 
 Targets (aliases in parentheses):
   fig:Var_approx  (var-approx)  Effective-IDW overlay, H2(4)/M/1+M and +E2
@@ -12,8 +12,8 @@ Targets (aliases in parentheses):
   first-b                       First-RQ calibrated b_k(q), k=1,2,3
   refined-b                     Refined-RQ calibrated b_k(c), k=1,2,3
   all                           the five paper figure groups (22 PDFs)
-  aux                           complete plot set for every model, all IDW
-                                overlays, w-table overlays and b diagnostics
+  aux                           complete plot set for all 15 workload models,
+                                all six IDW overlays, and table diagnostics
 
 Existing outputs are reused (with a provenance check against the config);
 use --force to regenerate everything a target needs.  --quick runs the whole
@@ -33,7 +33,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import time
@@ -46,9 +45,7 @@ from rqab.util import CONFIGS_DIR, RESULTS_DIR, BUILD_DIR  # noqa: E402
 PY = sys.executable
 SCRIPTS = REPO / "scripts"
 
-# ---------------------------------------------------------------------------
-# Figure registry: exact TeX figure labels -> model configs / artifacts.
-# ---------------------------------------------------------------------------
+# Figure registry: figure target labels mapped to configs and artifacts.
 
 TRIPANEL_FIGURES: dict[str, dict] = {
     "fig:MM1_GI": {
@@ -121,9 +118,7 @@ QUICK_IDW_OVERRIDES = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Step engine.
-# ---------------------------------------------------------------------------
+# Step engine
 
 
 @dataclass
@@ -236,9 +231,7 @@ def run_plan(plan: Plan, force: bool, jobs: int, dry_run: bool) -> int:
     return 0
 
 
-# ---------------------------------------------------------------------------
-# Provenance.
-# ---------------------------------------------------------------------------
+# Provenance checks
 
 
 def check_workload_provenance(csv_path: Path, config_path: Path) -> None:
@@ -260,7 +253,7 @@ def check_workload_provenance(csv_path: Path, config_path: Path) -> None:
         missing_timing = [column for column in timing_columns if column not in row]
         if missing_timing:
             mismatches.append(
-                "legacy aggregate missing simulation provenance columns "
+                "aggregate missing simulation provenance columns "
                 + ",".join(missing_timing)
             )
         else:
@@ -301,9 +294,7 @@ def _grid_tuple_count() -> int:
     return _GRID_COUNT_CACHE[0]
 
 
-# ---------------------------------------------------------------------------
-# Quick mode: derived configs with reduced simulation effort.
-# ---------------------------------------------------------------------------
+# Quick-mode configs with reduced simulation effort
 
 
 def make_quick_config(src: Path, dst: Path, overrides: dict) -> None:
@@ -374,9 +365,7 @@ class Context:
         return dst
 
 
-# ---------------------------------------------------------------------------
-# Step builders.
-# ---------------------------------------------------------------------------
+# Step builders
 
 
 def add_build_step(plan: Plan) -> str:
@@ -768,9 +757,7 @@ def add_diagnostics_steps(plan: Plan, ctx: Context) -> list[str]:
     return keys
 
 
-# ---------------------------------------------------------------------------
-# Target expansion.
-# ---------------------------------------------------------------------------
+# Target expansion
 
 
 def expand_target(plan: Plan, ctx: Context, target: str) -> bool:
@@ -831,14 +818,14 @@ def print_target_list() -> None:
     print("  fig:MM1_GI     ~20 min MC for mm1m + ~2 min/model analytics + plots")
     print("  other tripanel ~5-10 min MC per model + analytics + plots")
     print("  fig:Var_approx hours per config if the idw sims must rerun; seconds if")
-    print("                 the committed model0_* curve CSVs are reused")
-    print("  aux            everything above for all 16 models")
-    print("With committed results/ present, plots re-render in seconds ([skip]/reuse).")
+    print("                 cached model0_* curve CSVs are reused")
+    print("  aux            everything above for all 15 workload models")
+    print("With cached results/ present, plots re-render in seconds ([skip]/reuse).")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Reproduce the figures of RQ_ab.tex.",
+        description="Reproduce the numerical figures for Robust Queueing with Abandonment.",
         usage="reproduce.py [options] target [target ...]",
     )
     parser.add_argument(
@@ -856,7 +843,7 @@ def main() -> int:
         action="store_true",
         help=(
             "Reduced-effort smoke run into results_quick/ "
-            "(reads production w/b tables, never writes to results/)."
+            "(reuses cached production w/b tables when available; never writes to results/)."
         ),
     )
     args = parser.parse_args()

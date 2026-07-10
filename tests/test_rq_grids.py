@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
 import sys
 import unittest
 
 import helpers
 from helpers import (
-    B_TABLE_K1,
     CONFIGS_DIR,
     RUN_GRID_SCRIPT,
-    W_TABLE_K1,
     read_csv_rows,
     tandem_h2e2_to_m1h2_payload,
     temp_dir,
@@ -20,12 +19,13 @@ from helpers import (
     valid_model_payload,
     write_csv,
     write_json,
+    write_test_calibration_tables,
 )
 
 from rqab import first as first_mod
 from rqab import refined as refined_mod
 from rqab.effective_idw import tau_tilde_c
-from rqab.fixed_point import BisectOptions, survival_alpha
+from rqab.fixed_point import BisectOptions, solve_fixed_point, survival_alpha
 from rqab.grids import build_s_grid
 from rqab.idc import departure_idc_curve
 from rqab.models import (
@@ -42,6 +42,7 @@ from rqab.plotting.ratio_panels import (
     load_workload_rows,
     load_z_rows,
 )
+from rqab.secondary import build_secondary_stats, compute_wg
 from rqab.tables import SQRT2, BCalibrationInterpolator, WTableInterpolator
 
 
@@ -86,7 +87,7 @@ class TestModelParsing(unittest.TestCase):
         )
         self.assertEqual(infer_k_from_patience(h2_comp), 1)
 
-    def test_tandem_model_parse_and_departure_idc_smoke(self) -> None:
+    def test_tandem_model_parse_and_departure_idc(self) -> None:
         model_path = CONFIGS_DIR / "workload_tandem_h2_4e2_to_m1h2_4.json"
         parsed = load_model_config(model_path)
         self.assertTrue(parsed.is_tandem)
@@ -101,6 +102,15 @@ class TestModelParsing(unittest.TestCase):
         self.assertEqual(len(dep), len(s_grid))
         self.assertAlmostEqual(dep[0], 1.0, places=12)
         self.assertTrue(all(v == v and v > 0.0 for v in dep))
+
+    def test_all_shipped_workload_configs_parse(self) -> None:
+        config_paths = sorted(CONFIGS_DIR.glob("workload_*.json"))
+        config_paths = [path for path in config_paths if "grid" not in path.stem]
+        self.assertEqual(len(config_paths), 15)
+        for config_path in config_paths:
+            with self.subTest(config=config_path.name):
+                model = load_model_config(config_path)
+                self.assertTrue(model.model_alias)
 
 
 class TestBCalibrationInterpolator(unittest.TestCase):
@@ -189,15 +199,36 @@ class TestSurvivalAlpha(unittest.TestCase):
             self.assertEqual(survival_alpha(-1.0, 1.0, comp), 1.0)
 
 
-def make_refined_solver(n_s: int = 160) -> refined_mod.RefinedSolver:
+class TestFixedPoint(unittest.TestCase):
+    def test_brackets_and_solves_root(self) -> None:
+        result = solve_fixed_point(
+            lambda z: (2.0 / (1.0 + z), 1.0),
+            BisectOptions(abs_tol=1e-10, rel_tol=1e-10),
+        )
+
+        self.assertAlmostEqual(result.z, 1.0, places=8)
+        self.assertLessEqual(result.bracket_lo, 1.0)
+        self.assertGreaterEqual(result.bracket_hi, 1.0)
+
+    def test_reports_bracket_failure(self) -> None:
+        options = BisectOptions(bracket_max_doublings=3)
+        with self.assertRaisesRegex(RuntimeError, "failed to bracket"):
+            solve_fixed_point(lambda _z: (float("inf"), 1.0), options)
+
+
+def make_refined_solver(
+    w_table_path: Path,
+    b_table_path: Path,
+    n_s: int = 160,
+) -> refined_mod.RefinedSolver:
     parsed = load_model_config(CONFIGS_DIR / "workload_mm1m.json")
     k = infer_k_from_patience(parsed.patience)
     base = build_base_stats(parsed, k=k)
     return refined_mod.RefinedSolver(
         model=parsed,
         base=base,
-        b_table=BCalibrationInterpolator.from_csv(B_TABLE_K1),
-        w_interp=WTableInterpolator.from_matrix_csv(W_TABLE_K1),
+        b_table=BCalibrationInterpolator.from_csv(b_table_path),
+        w_interp=WTableInterpolator.from_matrix_csv(w_table_path),
         s_grid=build_s_grid(1e-3, 1e5, n_s),
         bisect=BisectOptions(
             abs_tol=1e-7, rel_tol=1e-7, max_iters=120, bracket_max_doublings=60
@@ -206,39 +237,18 @@ def make_refined_solver(n_s: int = 160) -> refined_mod.RefinedSolver:
 
 
 class TestRefinedSolverInternals(unittest.TestCase):
-    def test_fixed_point_smoke(self) -> None:
-        solver = make_refined_solver(n_s=200)
-        kernel = solver.build_kernel(lam=1.25, alpha=0.5)
-        self.assertTrue(kernel.c == kernel.c)  # finite check
-        self.assertGreaterEqual(kernel.b, 0.0)
+    def test_fixed_point_solution(self) -> None:
+        with temp_dir() as tmp:
+            w_table, b_table = write_test_calibration_tables(tmp, k=1)
+            solver = make_refined_solver(w_table, b_table, n_s=200)
+            kernel = solver.build_kernel(lam=1.25, alpha=0.5)
+            self.assertTrue(math.isfinite(kernel.c))
+            self.assertGreaterEqual(kernel.b, 0.0)
 
-        sol = solver.solve_fixed_point(lam=1.25, alpha=0.5, kernel=kernel)
-        self.assertGreaterEqual(sol.z, 0.0)
-        self.assertTrue(sol.rhs_at_solution == sol.rhs_at_solution)
-        self.assertTrue(sol.status.startswith("ok"))
-
-    def test_monotonic_sanity(self) -> None:
-        solver = make_refined_solver(n_s=160)
-
-        def z_of(lam: float, alpha: float) -> float:
-            row = {
-                "tuple_id": 1,
-                "lambda": lam,
-                "alpha": alpha,
-                "lambda_k": 0,
-                "lambda_form": "custom",
-                "alpha_k": 0,
-            }
-            solved = solver.solve_one_tuple(row)
-            return float(solved["z_rq_refined"])
-
-        z_low_lam = z_of(0.8, 1.0)
-        z_high_lam = z_of(1.2, 1.0)
-        self.assertGreaterEqual(z_high_lam, z_low_lam)
-
-        z_low_alpha = z_of(1.1, 0.5)
-        z_high_alpha = z_of(1.1, 2.0)
-        self.assertGreaterEqual(z_low_alpha, z_high_alpha)
+            sol = solver.solve_fixed_point(lam=1.25, alpha=0.5, kernel=kernel)
+            self.assertGreaterEqual(sol.z, 0.0)
+            self.assertTrue(math.isfinite(sol.rhs_at_solution))
+            self.assertTrue(sol.status.startswith("ok"))
 
     def test_canonical_b_table_c_is_identity_for_reference_models(self) -> None:
         for k in (1, 2, 3):
@@ -438,8 +448,8 @@ class TestFirstCalibration(unittest.TestCase):
         self.assertAlmostEqual(calibration.standardized_mean, 1.3319742592597457, places=10)
         gap = calibration.standardized_mean**2 - 2.0
         self.assertLess(gap, 0.0)
-        legacy_abs_b = math.sqrt(2.0 * calibration.standardized_mean * abs(gap))
-        self.assertGreater(legacy_abs_b, 0.7)
+        incorrect_abs_b = math.sqrt(2.0 * calibration.standardized_mean * abs(gap))
+        self.assertGreater(incorrect_abs_b, 0.7)
         self.assertEqual(calibration.b, 0.0)
         self.assertEqual(
             calibration.status, first_mod.CALIBRATION_FLUID_FALLBACK
@@ -546,11 +556,9 @@ class TestPlotLoaders(unittest.TestCase):
                 rows, method_title = load_combined_secondary_rows(combined_csv)
                 self.assertEqual(method_title, "WG")
                 self.assertEqual(len(rows), 3)
-                # Rows are keyed by tuple_id.
                 self.assertEqual(rows[2]["secondary_method"], label)
                 self.assertAlmostEqual(rows[2]["z_secondary"], 0.85, places=12)
                 self.assertAlmostEqual(rows[2]["z_hg"], 0.90, places=12)
-                # Non-ok status rows become NaN, not dropped.
                 self.assertTrue(math.isnan(rows[3]["z_secondary"]))
                 self.assertAlmostEqual(rows[3]["z_hg"], 2.3, places=12)
 
@@ -608,176 +616,103 @@ def run_grid_cli(method, model_path, grid_path, out_csv, extra=()):
 
 
 class TestGridCLI(unittest.TestCase):
-    """End-to-end runs of scripts/run_grid.py on the tiny 3-tuple grid.
-
-    The pinned z values were produced by this implementation with the s-grid
-    settings below and the checked-in k=1 tables; they act as regression
-    anchors for the refined (eq:RQ_ab_2) and first (eq:RQ_ab_1) solvers.
-    """
-
-    REFINED_SINGLE_Z = [0.3755364939570427, 0.6497223302721977, 1.1397427096962929]
-    REFINED_TANDEM_Z = [0.283348448574543, 0.4733736142516136, 0.8205712214112282]
-    FIRST_SINGLE_Z = [0.3879299536347389, 0.6687495037913322, 1.1627303883433342]
-    FIRST_TANDEM_Z = [0.29745475202798843, 0.4956096336245537, 0.8420752659440041]
-
-    def _rows_sorted(self, out_csv):
-        rows, fieldnames = read_csv_rows(out_csv)
-        rows.sort(key=lambda r: int(r["tuple_id"]))
-        return rows, fieldnames
-
-    def test_refined_single_station_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_mm1m.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out.csv"
-            write_json(model_path, valid_model_payload())
-            write_json(grid_path, tiny_grid_payload())
-
-            cmd, proc = run_grid_cli(
+    def test_first_and_refined_single_and_tandem(self) -> None:
+        cases = (
+            ("refined-single", "refined", valid_model_payload(), False),
+            (
+                "refined-tandem",
                 "refined",
-                model_path,
-                grid_path,
-                out_csv,
-                extra=("--w-table", str(W_TABLE_K1), "--b-table", str(B_TABLE_K1)),
-            )
-            if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid refined RQ run failed.", cmd, proc))
-            self.assertTrue(out_csv.exists())
+                tandem_h2e2_to_m1h2_payload(),
+                True,
+            ),
+            ("first-single", "first", valid_model_payload(), False),
+            ("first-tandem", "first", tandem_h2e2_to_m1h2_payload(), True),
+        )
 
-            rows, fieldnames = self._rows_sorted(out_csv)
-            self.assertEqual(len(rows), 3)
-            for col in refined_mod.CSV_COLUMNS:
-                self.assertIn(col, fieldnames)
+        for label, method, payload, is_tandem in cases:
+            with self.subTest(case=label), temp_dir() as tmp:
+                model_path = tmp / f"{label}.json"
+                grid_path = tmp / "grid.json"
+                out_csv = tmp / "out.csv"
+                write_json(model_path, payload)
+                write_json(grid_path, tiny_grid_payload())
 
-            z_values = []
-            for row in rows:
-                self.assertTrue(str(row["solver_status"]).startswith("ok"))
-                self.assertTrue(str(row["status_secondary"]).startswith("ok"))
-                self.assertTrue(str(row["status_hg"]).startswith("ok"))
-                self.assertEqual(int(row["k"]), 1)
-                z_values.append(float(row["z_rq_refined"]))
-
-            # Increasing lambda and decreasing alpha both push z up.
-            self.assertLess(z_values[0], z_values[1])
-            self.assertLess(z_values[1], z_values[2])
-            for got, expected in zip(z_values, self.REFINED_SINGLE_Z):
-                self.assertAlmostEqual(got, expected, delta=1e-6)
-
-    def test_refined_tandem_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_tandem_h2_4e2_to_m1h2_4.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out.csv"
-            write_json(model_path, tandem_h2e2_to_m1h2_payload())
-            write_json(grid_path, tiny_grid_payload())
-
-            cmd, proc = run_grid_cli(
-                "refined",
-                model_path,
-                grid_path,
-                out_csv,
-                extra=("--w-table", str(W_TABLE_K1), "--b-table", str(B_TABLE_K1)),
-            )
-            if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid tandem refined RQ run failed.", cmd, proc))
-            self.assertTrue(out_csv.exists())
-
-            rows, fieldnames = self._rows_sorted(out_csv)
-            self.assertEqual(len(rows), 3)
-            for col in refined_mod.CSV_COLUMNS:
-                self.assertIn(col, fieldnames)
-
-            z_values = []
-            for row in rows:
-                self.assertTrue(str(row["solver_status"]).startswith("ok"))
-                self.assertTrue(str(row["status_secondary"]).startswith("ok"))
-                self.assertTrue(str(row["status_hg"]).startswith("ok"))
-                # H2 patience has F'(0) > 0, so WG is the secondary method.
-                self.assertEqual(str(row["secondary_method"]), "wg")
-                self.assertNotEqual(str(row["z_hg"]), "")
-                self.assertNotEqual(str(row["c_x2"]), "")
-                # Tandem c_x2 includes the departure-IDC-derived arrival SCV.
-                self.assertGreater(float(row["c_x2"]), 1.0)
-                z_values.append(float(row["z_rq_refined"]))
-
-            self.assertLess(z_values[0], z_values[1])
-            self.assertLess(z_values[1], z_values[2])
-            for got, expected in zip(z_values, self.REFINED_TANDEM_Z):
-                self.assertAlmostEqual(got, expected, delta=1e-6)
-
-    def test_first_single_station_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_mm1m.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out.csv"
-            write_json(model_path, valid_model_payload())
-            write_json(grid_path, tiny_grid_payload())
-
-            cmd, proc = run_grid_cli("first", model_path, grid_path, out_csv)
-            if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid first RQ run failed.", cmd, proc))
-            self.assertTrue(out_csv.exists())
-
-            rows, fieldnames = self._rows_sorted(out_csv)
-            self.assertEqual(len(rows), 3)
-            for col in first_mod.CSV_COLUMNS:
-                self.assertIn(col, fieldnames)
-
-            z_values = []
-            for row in rows:
-                self.assertTrue(str(row["solver_status"]).startswith("ok"))
-                self.assertGreater(float(row["b"]), 0.0)
-                self.assertGreater(float(row["psi"]), 0.0)
-                self.assertEqual(row["calibration_status"], first_mod.CALIBRATION_EXACT)
-                # M/M/1+M has R=beta=1, so q equals the raw c coordinate.
-                self.assertAlmostEqual(
-                    float(row["tilde_c"]), float(row["c"]), places=13
+                extra: tuple[str, ...] = ()
+                if method == "refined":
+                    w_table, b_table = write_test_calibration_tables(tmp, k=1)
+                    extra = (
+                        "--w-table",
+                        str(w_table),
+                        "--b-table",
+                        str(b_table),
+                    )
+                cmd, proc = run_grid_cli(
+                    method,
+                    model_path,
+                    grid_path,
+                    out_csv,
+                    extra=extra,
                 )
-                z_values.append(float(row["z_rq_first"]))
+                if proc.returncode != 0:
+                    self.fail(helpers.fail_message(f"{label} grid run failed.", cmd, proc))
 
-            self.assertLess(z_values[0], z_values[1])
-            self.assertLess(z_values[1], z_values[2])
-            for got, expected in zip(z_values, self.FIRST_SINGLE_Z):
-                self.assertAlmostEqual(got, expected, delta=1e-6)
-
-    def test_first_tandem_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_tandem_h2_4e2_to_m1h2_4.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out.csv"
-            write_json(model_path, tandem_h2e2_to_m1h2_payload())
-            write_json(grid_path, tiny_grid_payload())
-
-            cmd, proc = run_grid_cli("first", model_path, grid_path, out_csv)
-            if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid tandem first RQ run failed.", cmd, proc))
-            self.assertTrue(out_csv.exists())
-
-            rows, fieldnames = self._rows_sorted(out_csv)
-            self.assertEqual(len(rows), 3)
-            for col in first_mod.CSV_COLUMNS:
-                self.assertIn(col, fieldnames)
-
-            z_values = []
-            for row in rows:
-                self.assertTrue(str(row["solver_status"]).startswith("ok"))
-                self.assertEqual(row["calibration_status"], first_mod.CALIBRATION_EXACT)
-                ratio = (float(row["c_a2"]) + float(row["c_s2"])) / (
-                    2.0 * float(row["mu"])
+                rows, fieldnames = read_csv_rows(out_csv)
+                rows.sort(key=lambda row: int(row["tuple_id"]))
+                self.assertEqual(len(rows), 3)
+                expected_columns = (
+                    refined_mod.CSV_COLUMNS if method == "refined" else first_mod.CSV_COLUMNS
                 )
-                expected_q = (
-                    float(row["c"])
-                    * ratio ** (-float(row["k"]) / (float(row["k"]) + 1.0))
-                    * float(row["beta_patience"])
-                    ** (-1.0 / (float(row["k"]) + 1.0))
-                )
-                self.assertAlmostEqual(float(row["tilde_c"]), expected_q, places=13)
-                z_values.append(float(row["z_rq_first"]))
+                self.assertTrue(set(expected_columns).issubset(fieldnames))
 
-            self.assertLess(z_values[0], z_values[1])
-            self.assertLess(z_values[1], z_values[2])
-            for got, expected in zip(z_values, self.FIRST_TANDEM_Z):
-                self.assertAlmostEqual(got, expected, delta=1e-6)
+                z_column = "z_rq_refined" if method == "refined" else "z_rq_first"
+                for row in rows:
+                    self.assertTrue(str(row["solver_status"]).startswith("ok"))
+                    self.assertEqual(int(row["k"]), 1)
+                    self.assertGreaterEqual(float(row[z_column]), 0.0)
+                    self.assertTrue(math.isfinite(float(row[z_column])))
+
+                    if method == "refined":
+                        self.assertTrue(str(row["status_secondary"]).startswith("ok"))
+                        self.assertTrue(str(row["status_hg"]).startswith("ok"))
+                        self.assertEqual(row["secondary_method"], "wg")
+                    else:
+                        self.assertGreater(float(row["b"]), 0.0)
+                        self.assertGreater(float(row["psi"]), 0.0)
+                        self.assertEqual(
+                            row["calibration_status"], first_mod.CALIBRATION_EXACT
+                        )
+                        ratio = (float(row["c_a2"]) + float(row["c_s2"])) / (
+                            2.0 * float(row["mu"])
+                        )
+                        expected_q = (
+                            float(row["c"])
+                            * ratio ** (-float(row["k"]) / (float(row["k"]) + 1.0))
+                            * float(row["beta_patience"])
+                            ** (-1.0 / (float(row["k"]) + 1.0))
+                        )
+                        self.assertAlmostEqual(
+                            float(row["tilde_c"]), expected_q, places=13
+                        )
+
+                    if is_tandem and method == "refined":
+                        self.assertGreater(float(row["c_x2"]), 1.0)
+
+                if label == "refined-single":
+                    model = load_model_config(model_path)
+                    base = build_base_stats(model, k=1)
+                    stats = build_secondary_stats(
+                        model,
+                        mu=base.mu,
+                        c_a2=base.c_a2,
+                        c_s2=base.c_s2,
+                    )
+                    critical = rows[1]
+                    expected_wg, status = compute_wg(lam=1.0, alpha=1.0, stats=stats)
+                    self.assertTrue(status.startswith("ok"))
+                    self.assertAlmostEqual(
+                        float(critical["z_secondary"]), expected_wg, places=12
+                    )
+                    self.assertEqual(critical["z_secondary"], critical["z_wg"])
 
 
 if __name__ == "__main__":

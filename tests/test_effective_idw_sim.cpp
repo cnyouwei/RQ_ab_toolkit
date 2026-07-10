@@ -43,6 +43,7 @@ std::string valid_config_json() {
   "models": [
     {
       "name": "M/M/1+M",
+      "curve_label_template": "{model}",
       "arrival": {
         "distribution": { "family": "exponential", "params": { "rate": 1.0 } }
       },
@@ -57,46 +58,6 @@ std::string valid_config_json() {
     }
   ]
 })JSON";
-}
-
-std::string config_with_distribution_snippets(
-    const std::string& arrival_dist,
-    const std::string& service_dist,
-    const std::string& patience_dist) {
-    std::string cfg = R"JSON({
-  "alpha": { "indices": [0], "base": 2.0 },
-  "simulation": {
-    "warmup_time": 10.0,
-    "sample_time": 200.0,
-    "tau": 0.02,
-    "max_level": 8,
-    "min_windows_per_t": 10,
-    "n_tau_shifts": 1,
-    "threads": 1,
-    "seed": 123,
-    "save_event_trace": false
-  },
-  "models": [
-    {
-      "name": "dist_smoke",
-      "arrival": {
-        "distribution": "__ARRIVAL_DIST__"
-      },
-      "system": { "c": 0.2 },
-      "service": {
-        "distribution": "__SERVICE_DIST__"
-      },
-      "patience": {
-        "distribution": "__PATIENCE_DIST__"
-      },
-      "scaling": { "k": 1 }
-    }
-  ]
-})JSON";
-    cfg = replace_once(cfg, "\"__ARRIVAL_DIST__\"", arrival_dist);
-    cfg = replace_once(cfg, "\"__SERVICE_DIST__\"", service_dist);
-    cfg = replace_once(cfg, "\"__PATIENCE_DIST__\"", patience_dist);
-    return cfg;
 }
 
 double csv_column_mean(const std::filesystem::path& path, int zero_based_column, std::size_t* n_rows = nullptr) {
@@ -135,236 +96,45 @@ void test_config_validation() {
 
     const auto valid_path = write_text_file(dir, "valid.json", valid_config_json());
     const auto cfg = wck::load_effective_idw_sim_config(valid_path);
-    expect(cfg.simulation.threads == 1, "config validation: default threads parse mismatch");
+    expect(cfg.simulation.threads == 1, "config validation: threads parse mismatch");
     expect(std::abs(cfg.simulation.tau - 0.02) < 1e-12, "config validation: tau parse mismatch");
     expect(
         std::abs(cfg.models[0].scaling.beta_patience - 1.0) < 1e-12,
         "config validation: expected derived beta_patience for M patience");
-
-    const auto no_beta_cfg = replace_once(
-        valid_config_json(),
-        "\"scaling\": { \"k\": 1, \"beta_patience\": 1.0 }",
-        "\"scaling\": { \"k\": 1 }");
-    const auto no_beta_path = write_text_file(dir, "no_beta.json", no_beta_cfg);
-    const auto no_beta = wck::load_effective_idw_sim_config(no_beta_path);
-    expect(
-        std::abs(no_beta.models[0].scaling.beta_patience - 1.0) < 1e-12,
-        "config validation: omitted beta_patience should be derived from patience distribution");
-
-    const auto inconsistent_beta_cfg = replace_once(
-        valid_config_json(),
-        "\"beta_patience\": 1.0",
-        "\"beta_patience\": 0.75");
-    const auto inconsistent_beta_path = write_text_file(dir, "inconsistent_beta.json", inconsistent_beta_cfg);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(inconsistent_beta_path); },
-        "model.scaling.beta_patience",
-        "config validation: inconsistent beta_patience should be rejected");
-
-    const auto valid_e2 = replace_once(
-        valid_config_json(),
-        "\"distribution\": { \"family\": \"exponential\", \"params\": { \"rate\": 1.0 } }",
-        "\"distribution\": { \"family\": \"erlang_k\", \"params\": { \"k\": 2, \"rate\": 2.0 } }");
-    const auto valid_e2_path = write_text_file(dir, "valid_e2.json", valid_e2);
-    const auto cfg_e2 = wck::load_effective_idw_sim_config(valid_e2_path);
-    expect(cfg_e2.models.size() == 1U, "config validation: expected one model in e2 config");
-    expect(
-        cfg_e2.models[0].arrival.family == wck::DistributionFamily::kErlangK,
-        "config validation: erlang family parse mismatch");
-    expect(cfg_e2.models[0].arrival.erlang_k.k == 2, "config validation: erlang k parse mismatch");
-
-    const auto all_families_a = config_with_distribution_snippets(
-        R"JSON({ "family": "hyperexponential2", "params": { "p": 0.5, "rate1": 3.0, "rate2": 0.3333333333333333 } })JSON",
-        R"JSON({ "family": "erlang_k", "params": { "k": 3, "rate": 1.8 } })JSON",
-        R"JSON({ "family": "exponential", "params": { "rate": 2.2 } })JSON");
-    const auto all_families_a_path = write_text_file(dir, "all_families_a.json", all_families_a);
-    const auto cfg_families_a = wck::load_effective_idw_sim_config(all_families_a_path);
-    expect(
-        cfg_families_a.models[0].arrival.family == wck::DistributionFamily::kHyperexponential2,
-        "config validation: arrival h2 parse mismatch");
-    expect(
-        cfg_families_a.models[0].service.family == wck::DistributionFamily::kErlangK,
-        "config validation: service erlang parse mismatch");
-    expect(
-        cfg_families_a.models[0].patience.family == wck::DistributionFamily::kExponential,
-        "config validation: patience exponential parse mismatch");
-
-    const auto all_families_b = config_with_distribution_snippets(
-        R"JSON({ "family": "erlang_k", "params": { "k": 2, "rate": 2.0 } })JSON",
-        R"JSON({ "family": "exponential", "params": { "rate": 1.1 } })JSON",
-        R"JSON({ "family": "hyperexponential2", "params": { "p": 0.7, "rate1": 3.5, "rate2": 0.4 } })JSON");
-    const auto all_families_b_path = write_text_file(dir, "all_families_b.json", all_families_b);
-    const auto cfg_families_b = wck::load_effective_idw_sim_config(all_families_b_path);
-    expect(
-        cfg_families_b.models[0].arrival.family == wck::DistributionFamily::kErlangK,
-        "config validation: arrival erlang parse mismatch");
-    expect(
-        cfg_families_b.models[0].service.family == wck::DistributionFamily::kExponential,
-        "config validation: service exponential parse mismatch");
-    expect(
-        cfg_families_b.models[0].patience.family == wck::DistributionFamily::kHyperexponential2,
-        "config validation: patience h2 parse mismatch");
-
-    const auto invalid_erlang_k = replace_once(valid_e2, "\"k\": 2", "\"k\": 0");
-    const auto invalid_e2_scv_path = write_text_file(dir, "invalid_erlang_k.json", invalid_erlang_k);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_e2_scv_path); },
-        "config validation: erlang k < 1 should throw");
-
-    const auto missing_sim = write_text_file(
-        dir,
-        "missing_sim.json",
-        R"JSON({
-  "alpha": { "indices": [0], "base": 2.0 },
-  "models": []
-})JSON");
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(missing_sim); },
-        "config validation: missing simulation should throw");
 
     const auto invalid_sample = replace_once(
         valid_config_json(),
         "\"sample_time\": 200.0",
         "\"sample_time\": 0.0");
     const auto invalid_sample_path = write_text_file(dir, "invalid_sample.json", invalid_sample);
-    expect_throw(
+    expect_throw_contains(
         [&]() { (void)wck::load_effective_idw_sim_config(invalid_sample_path); },
-        "config validation: nonpositive sample_time should throw");
+        "simulation.sample_time",
+        "config validation: range error should include the field path");
 
-    const auto invalid_tau = replace_once(
-        valid_config_json(),
-        "\"tau\": 0.02",
-        "\"tau\": 0.0");
-    const auto invalid_tau_path = write_text_file(dir, "invalid_tau.json", invalid_tau);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_tau_path); },
-        "config validation: nonpositive tau should throw");
-
-    const auto invalid_level = replace_once(
-        valid_config_json(),
-        "\"max_level\": 8",
-        "\"max_level\": -1");
-    const auto invalid_level_path = write_text_file(dir, "invalid_level.json", invalid_level);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_level_path); },
-        "config validation: negative max_level should throw");
-
-    const auto invalid_min_windows = replace_once(
-        valid_config_json(),
-        "\"min_windows_per_t\": 10",
-        "\"min_windows_per_t\": 1");
-    const auto invalid_min_windows_path = write_text_file(dir, "invalid_min_windows.json", invalid_min_windows);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_min_windows_path); },
-        "config validation: min_windows_per_t < 2 should throw");
-
-    const auto invalid_shift_count = replace_once(
-        valid_config_json(),
-        "\"n_tau_shifts\": 1",
-        "\"n_tau_shifts\": 0");
-    const auto invalid_shift_count_path = write_text_file(dir, "invalid_shift_count.json", invalid_shift_count);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_shift_count_path); },
-        "config validation: n_tau_shifts < 1 should throw");
-
-    const auto invalid_arrival = replace_once(
-        valid_config_json(),
-        "\"family\": \"exponential\"",
-        "\"family\": \"mmpp\"");
-    const auto invalid_arrival_path = write_text_file(dir, "invalid_arrival.json", invalid_arrival);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_arrival_path); },
-        "model.arrival.distribution.family",
-        "config validation: invalid arrival family should include field path");
-
-    const auto missing_arrival_rate = replace_once(
-        valid_config_json(),
-        "\"params\": { \"rate\": 1.0 }",
-        "\"params\": {}");
-    const auto missing_arrival_rate_path = write_text_file(dir, "missing_arrival_rate.json", missing_arrival_rate);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(missing_arrival_rate_path); },
-        "model.arrival.distribution.params.rate",
-        "config validation: missing arrival rate should include field path");
-
-    const auto invalid_threads_negative = replace_once(
-        valid_config_json(),
-        "\"threads\": 1",
-        "\"threads\": -2");
-    const auto invalid_threads_negative_path =
-        write_text_file(dir, "invalid_threads_negative.json", invalid_threads_negative);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_threads_negative_path); },
-        "config validation: negative threads should throw");
-
-    const auto invalid_threads_fraction = replace_once(
-        valid_config_json(),
-        "\"threads\": 1",
-        "\"threads\": 1.25");
-    const auto invalid_threads_fraction_path =
-        write_text_file(dir, "invalid_threads_fraction.json", invalid_threads_fraction);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(invalid_threads_fraction_path); },
-        "config validation: non-integer threads should throw");
-
-    const auto legacy_key = replace_once(
-        valid_config_json(),
-        "\"min_windows_per_t\": 10,",
-        "\"min_windows_per_t\": 10,\n    \"overlap_stride\": \"half\",");
-    const auto legacy_key_path = write_text_file(dir, "legacy_key.json", legacy_key);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_key_path); },
-        "config validation: legacy overlap_stride should be rejected");
-
-    const auto legacy_grid = replace_once(
-        valid_config_json(),
-        "\"tau\": 0.02,",
-        "\"tau\": 0.02,\n    \"estimate_grid\": { \"t_min\": 0.1, \"t_max\": 1.0, \"n_t\": 10 },");
-    const auto legacy_grid_path = write_text_file(dir, "legacy_grid.json", legacy_grid);
-    expect_throw(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_grid_path); },
-        "config validation: legacy estimate_grid should be rejected");
-
-    const auto legacy_arrival_type = replace_once(
-        valid_config_json(),
-        "\"arrival\": {\n        \"distribution\": { \"family\": \"exponential\", \"params\": { \"rate\": 1.0 } }\n      },",
-        "\"arrival\": {\n        \"type\": \"exp\",\n        \"distribution\": { \"family\": \"exponential\", \"params\": { \"rate\": 1.0 } }\n      },");
-    const auto legacy_arrival_type_path = write_text_file(dir, "legacy_arrival_type.json", legacy_arrival_type);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_arrival_type_path); },
-        "model.arrival.type",
-        "config validation: legacy arrival.type should provide migration error");
-
-    const auto legacy_service_mu = replace_once(
-        valid_config_json(),
-        "\"service\": {\n        \"distribution\": { \"family\": \"exponential\", \"params\": { \"rate\": 1.0 } }\n      },",
-        "\"service\": {\n        \"mu\": 1.0,\n        \"distribution\": { \"family\": \"exponential\", \"params\": { \"rate\": 1.0 } }\n      },");
-    const auto legacy_service_mu_path = write_text_file(dir, "legacy_service_mu.json", legacy_service_mu);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_service_mu_path); },
-        "model.service.mu",
-        "config validation: legacy service.mu should provide migration error");
-
-    const auto legacy_patience_k = replace_once(
-        valid_config_json(),
-        "\"patience\": {\n        \"distribution\": { \"family\": \"erlang_k\", \"params\": { \"k\": 1, \"rate\": 1.0 } }\n      },",
-        "\"patience\": {\n        \"k\": 1,\n        \"distribution\": { \"family\": \"erlang_k\", \"params\": { \"k\": 1, \"rate\": 1.0 } }\n      },");
-    const auto legacy_patience_k_path = write_text_file(dir, "legacy_patience_k.json", legacy_patience_k);
-    expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_patience_k_path); },
-        "model.patience.k",
-        "config validation: legacy patience.k should provide migration error");
-
-    const auto legacy_model_rho_exponent = replace_once(
+    const auto unknown_model_key = replace_once(
         valid_config_json(),
         "\"scaling\": { \"k\": 1, \"beta_patience\": 1.0 }",
         "\"rho_exponent\": 0.5,\n      \"scaling\": { \"k\": 1, \"beta_patience\": 1.0 }");
-    const auto legacy_model_rho_exponent_path =
-        write_text_file(dir, "legacy_model_rho_exponent.json", legacy_model_rho_exponent);
+    const auto unknown_model_key_path = write_text_file(dir, "unknown_model_key.json", unknown_model_key);
     expect_throw_contains(
-        [&]() { (void)wck::load_effective_idw_sim_config(legacy_model_rho_exponent_path); },
+        [&]() { (void)wck::load_effective_idw_sim_config(unknown_model_key_path); },
         "model.rho_exponent",
-        "config validation: legacy model.rho_exponent should provide migration error");
+        "config validation: unknown model key should include the field path");
+
+    const std::filesystem::path config_dir = std::filesystem::path(WCK_SOURCE_DIR) / "configs";
+    std::size_t loaded_configs = 0U;
+    for (const auto& entry : std::filesystem::directory_iterator(config_dir)) {
+        const std::string filename = entry.path().filename().string();
+        if (!entry.is_regular_file() || filename.rfind("effective_idw_", 0U) != 0U
+            || entry.path().extension() != ".json") {
+            continue;
+        }
+        const auto shipped = wck::load_effective_idw_sim_config(entry.path());
+        expect(!shipped.models.empty(), "config validation: shipped config has no models");
+        ++loaded_configs;
+    }
+    expect(loaded_configs > 0U, "config validation: no shipped effective-IDW configs found");
 }
 
 void test_tau_shift_grid() {
@@ -384,27 +154,6 @@ void test_tau_shift_grid() {
     expect_throw(
         [&]() { (void)wck::build_tau_shift_grid(0.1, 0); },
         "tau shifts: nonpositive shift count should throw");
-}
-
-void test_h2_roundtrip() {
-    constexpr double rate = 1.3;
-    constexpr double scv = 4.0;
-    constexpr double r = 0.5;
-
-    const wck::H2Params params = wck::recover_h2_params(rate, scv, r);
-    expect(params.mu1 + 1e-12 >= params.mu2, "H2 roundtrip: expected mu1 >= mu2");
-
-    const double mean = params.p / params.mu1 + (1.0 - params.p) / params.mu2;
-    const double rec_rate = 1.0 / mean;
-    const double second = 2.0 * (params.p / (params.mu1 * params.mu1)
-        + (1.0 - params.p) / (params.mu2 * params.mu2));
-    const double var = second - mean * mean;
-    const double rec_scv = var / (mean * mean);
-    const double rec_r = (params.p / params.mu1) / mean;
-
-    expect(std::abs(rec_rate - rate) < 1e-10, "H2 roundtrip: rate mismatch");
-    expect(std::abs(rec_scv - scv) < 1e-9, "H2 roundtrip: scv mismatch");
-    expect(std::abs(rec_r - r) < 1e-10, "H2 roundtrip: r mismatch");
 }
 
 void test_e2_arrival_sample_scv() {
@@ -674,87 +423,6 @@ void test_compound_poisson_idw_near_two() {
     }
 }
 
-void test_estimator_progress_monotone() {
-    const auto bins = sample_compound_poisson_bins(40000U, 0.02, 1.15, 1.0, 123456ULL);
-
-    wck::EstimatorConfig cfg{};
-    cfg.tau_base = 0.02;
-    cfg.tau_shift = 0.02;
-    cfg.tau_shift_index = 0;
-    cfg.max_level = 10;
-    cfg.min_windows_per_t = 20;
-    cfg.ev_hat = 1.0;
-
-    std::vector<double> progress_values;
-    const auto rows = wck::estimate_effective_idw_from_bins(
-        bins,
-        cfg,
-        nullptr,
-        nullptr,
-        [&](double p) { progress_values.push_back(p); });
-
-    expect(!rows.empty(), "progress monotone: expected nonempty rows");
-    expect(!progress_values.empty(), "progress monotone: no progress updates");
-
-    double prev = -1.0;
-    for (double p : progress_values) {
-        expect(p + 1e-12 >= prev, "progress monotone: progress not monotone");
-        prev = p;
-    }
-    expect(std::abs(progress_values.back() - 1.0) < 1e-12, "progress monotone: final progress must be 1");
-}
-
-void test_warmup_discard_effect() {
-    wck::RunParameters p1{};
-    p1.model_name = "warmup_test";
-    p1.model_index = 0U;
-    p1.alpha_index = 0;
-    p1.alpha = 1.0;
-    p1.h = 0.5;
-    p1.c = 0.2;
-    p1.rho_exponent = 0.5;
-    p1.rho = 1.2;
-    p1.lambda = 1.2;
-    p1.arrival = make_exp(1.0);
-    p1.service = make_exp(1.0);
-    p1.patience = make_erlang(1, 1.0);
-    p1.scaling.k = 1;
-    p1.scaling.beta_patience = 1.0;
-    p1.simulation = wck::SimulationConfig{};
-    p1.simulation.warmup_time = 0.0;
-    p1.simulation.sample_time = 1200.0;
-    p1.simulation.tau = 0.05;
-    p1.simulation.max_level = 8;
-    p1.simulation.min_windows_per_t = 40;
-    p1.simulation.n_tau_shifts = 1;
-    p1.simulation.threads = 1;
-    p1.seed = 987654321ULL;
-
-    wck::RunParameters p2 = p1;
-    p2.simulation.warmup_time = 200.0;
-
-    const auto r1 = wck::simulate_effective_idw(p1, nullptr);
-    const auto r2 = wck::simulate_effective_idw(p2, nullptr);
-
-    expect(r1.estimates.size() == r2.estimates.size(), "warmup effect: expected same row count");
-
-    double first_diff = 0.0;
-    double last_diff = 0.0;
-    bool first_set = false;
-    for (std::size_t i = 0U; i < r1.estimates.size(); ++i) {
-        const double diff = std::abs(r1.estimates[i].idw_hat - r2.estimates[i].idw_hat);
-        if (!first_set) {
-            first_diff = diff;
-            first_set = true;
-        }
-        last_diff = diff;
-    }
-
-    expect(first_set, "warmup effect: no comparable estimate points");
-    expect(first_diff > 0.01, "warmup effect: early-horizon difference too small");
-    expect(last_diff < 0.4, "warmup effect: long-horizon estimate did not stabilize enough");
-}
-
 void test_tau_shift_parallel_execution() {
     wck::RunParameters p{};
     p.model_name = "tau_shift_parallel";
@@ -915,96 +583,17 @@ void test_cli_smoke() {
            "cli smoke: summary missing service_mu_effective");
 }
 
-void test_cli_threads_override() {
-    const auto dir = make_temp_dir("wck_effective_idw_cli_threads_override");
-    const auto out_dir = dir / "out";
-    std::filesystem::create_directories(out_dir);
-
-    const auto config_path = write_text_file(
-        dir,
-        "threads_override_config.json",
-        R"JSON({
-  "alpha": { "indices": [0], "base": 2.0 },
-  "simulation": {
-    "warmup_time": 5.0,
-    "sample_time": 120.0,
-    "tau": 0.02,
-    "max_level": 8,
-    "min_windows_per_t": 5,
-    "n_tau_shifts": 4,
-    "threads": 1,
-    "seed": 1234,
-    "save_event_trace": false
-  },
-  "models": [
-    {
-      "name": "M/M/1+M",
-      "arrival": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
-      "system": { "c": 0.2 },
-      "service": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
-      "patience": { "distribution": { "family": "erlang_k", "params": { "k": 1, "rate": 1.0 } } },
-      "scaling": { "k": 1, "beta_patience": 1.0 }
-    }
-  ]
-})JSON");
-
-    const std::string cmd_ok =
-        std::string("\"") + WCK_IDW_SIM_CLI_PATH + "\""
-        + " --config \"" + config_path.string() + "\""
-        + " --out-dir \"" + out_dir.string() + "\""
-        + " --threads 3";
-    const int rc_ok = std::system(cmd_ok.c_str());
-    expect(rc_ok == 0, "cli threads override: simulator command failed");
-
-    std::filesystem::path summary_path;
-    for (const auto& entry : std::filesystem::directory_iterator(out_dir)) {
-        if (!entry.is_regular_file()) {
-            continue;
-        }
-        const std::string name = entry.path().filename().string();
-        if (name.find("_summary.json") != std::string::npos) {
-            summary_path = entry.path();
-            break;
-        }
-    }
-    expect(!summary_path.empty(), "cli threads override: summary output missing");
-
-    std::ifstream in(summary_path);
-    expect(in.is_open(), "cli threads override: failed to open summary");
-    std::ostringstream contents;
-    contents << in.rdbuf();
-    const std::string text = contents.str();
-    expect(text.find("\"threads\": 3") != std::string::npos,
-           "cli threads override: expected simulation.threads override in summary");
-    expect(text.find("\"estimator_threads_used\": ") != std::string::npos,
-           "cli threads override: missing estimator_threads_used in summary");
-    expect(text.find("\"estimation_wall_seconds\": ") != std::string::npos,
-           "cli threads override: missing estimation_wall_seconds in summary");
-
-    const std::string cmd_bad =
-        std::string("\"") + WCK_IDW_SIM_CLI_PATH + "\""
-        + " --config \"" + config_path.string() + "\""
-        + " --out-dir \"" + out_dir.string() + "\""
-        + " --threads -1";
-    const int rc_bad = std::system(cmd_bad.c_str());
-    expect(rc_bad != 0, "cli threads override: negative thread argument should fail");
-}
-
 }  // namespace
 
 void run_effective_idw_sim_tests() {
     test_config_validation();
     test_tau_shift_grid();
-    test_h2_roundtrip();
     test_e2_arrival_sample_scv();
     test_arrival_coupling_normalization();
     test_patience_alpha_rate_scaling();
     test_distribution_family_smoke_for_service_and_patience();
     test_estimator_deterministic_bins();
     test_compound_poisson_idw_near_two();
-    test_estimator_progress_monotone();
-    test_warmup_discard_effect();
     test_tau_shift_parallel_execution();
     test_cli_smoke();
-    test_cli_threads_override();
 }

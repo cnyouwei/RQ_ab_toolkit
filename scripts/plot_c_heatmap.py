@@ -41,7 +41,8 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        from rqab.plotting import ratio_panels
+        import matplotlib  # noqa: F401
+        import rqab.plotting.ratio_panels as ratio_panels
     except ModuleNotFoundError as exc:
         print(f"warning: plotting dependencies unavailable ({exc})", file=sys.stderr)
         print("skipping plot generation because plotting dependencies are unavailable.", file=sys.stderr)

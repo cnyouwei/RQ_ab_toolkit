@@ -1,8 +1,6 @@
-"""IDC curves: equilibrium renewal arrivals and the tandem departure blend.
+"""IDC curves for equilibrium-renewal arrivals and tandem departures.
 
-The departure IDC uses the RQNA-IDC approximation (RQ_ab.tex eq:IDC_dep_app):
-I_d(t) = w*(u) I_a(t) + (1 - w*(u)) I_s(t) with the RBM weight w*(u)
-(eq:wstar_app) evaluated at u = (1-rho1)^2 lambda t / (rho1 c_x1^2).
+The tandem approximation blends arrival and service IDC using an RBM weight.
 """
 from __future__ import annotations
 

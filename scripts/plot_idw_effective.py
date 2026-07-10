@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Effective-IDW overlay figure (RQ_ab.tex fig:Var_approx).
+"""Effective-IDW simulated-versus-approximated overlay figure.
 
 Plots simulated effective IDW curves (solid; from the idw_sim binary's
 model{idx}_*_idx{i}_curve.csv outputs) against the w-table approximation
@@ -30,7 +30,8 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        from rqab.plotting import idw_curves
+        import matplotlib  # noqa: F401
+        import rqab.plotting.idw_curves as idw_curves
     except ModuleNotFoundError as exc:
         print(f"warning: plotting dependencies unavailable ({exc})", file=sys.stderr)
         print("skipping plot generation because plotting dependencies are unavailable.", file=sys.stderr)

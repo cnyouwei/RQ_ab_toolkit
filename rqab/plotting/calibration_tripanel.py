@@ -74,6 +74,7 @@ def render_calibration_tripanel(
     fallback_label: str,
     save_path: Path,
     no_show: bool,
+    dpi: int | None = None,
 ) -> Path:
     """Render calibration curves with the shared three-panel paper style."""
     if not ks:
@@ -178,7 +179,7 @@ def render_calibration_tripanel(
 
     out = Path(save_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, bbox_inches="tight")
+    fig.savefig(out, bbox_inches="tight", dpi=dpi)
     print(f"Saved plot: {out}")
     if not no_show:
         plt.show()

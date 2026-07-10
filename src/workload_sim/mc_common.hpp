@@ -1,19 +1,22 @@
 #pragma once
 
-// Internal scaffolding shared by the single-station and tandem workload
-// Monte-Carlo drivers. Everything here is deterministic given its inputs;
-// derive_rep_seed is part of the frozen seed machinery.
+// Shared Monte Carlo mechanics for the single-station and tandem drivers.
+// Seed derivation and reduction order are part of the reproducibility contract.
 
 #include "wck/common/distributions.hpp"
 #include "wck/common/hash.hpp"
+#include "wck/common/parallel.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace wck::mc {
@@ -151,6 +154,48 @@ inline std::size_t resolve_worker_count(int threads, std::size_t n_items) {
         resolved = static_cast<std::size_t>(threads);
     }
     return std::max<std::size_t>(1U, std::min(resolved, n_items));
+}
+
+template <typename Summary, typename SimulateOne>
+Summary run_replications(
+    const std::string& model_name,
+    double lambda,
+    double alpha,
+    int replications,
+    int threads,
+    std::uint64_t seed,
+    std::uint64_t tuple_hash_value,
+    std::vector<double>* per_rep_estimates,
+    SimulateOne&& simulate_one) {
+    const std::size_t n_reps = static_cast<std::size_t>(replications);
+    const std::size_t workers = resolve_worker_count(threads, n_reps);
+    const auto start = std::chrono::steady_clock::now();
+
+    std::vector<double> estimates(n_reps, std::numeric_limits<double>::quiet_NaN());
+    parallel_for_index(n_reps, workers, [&](std::size_t rep) {
+        estimates[rep] = simulate_one(derive_rep_seed(seed, tuple_hash_value, rep));
+    });
+
+    // Ascending-index reductions make results independent of worker count.
+    const double mean = running_mean(estimates);
+    const double std = sample_std(estimates, mean);
+    const auto end = std::chrono::steady_clock::now();
+
+    Summary summary{};
+    summary.model_name = model_name;
+    summary.lambda = lambda;
+    summary.alpha = alpha;
+    summary.n_reps = replications;
+    summary.threads_used = static_cast<int>(workers);
+    summary.seed = seed;
+    summary.mean_workload = mean;
+    summary.std_workload = std;
+    summary.runtime_seconds = std::chrono::duration<double>(end - start).count();
+
+    if (per_rep_estimates != nullptr) {
+        *per_rep_estimates = std::move(estimates);
+    }
+    return summary;
 }
 
 }  // namespace wck::mc

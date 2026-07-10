@@ -2,13 +2,11 @@
 
 #include "wck/common/distributions.hpp"
 #include "wck/common/hash.hpp"
-#include "wck/common/parallel.hpp"
 
 #include "mc_common.hpp"
 
 #include <algorithm>
 #include <bit>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -145,49 +143,25 @@ TandemWorkloadSummary simulate_tandem_workload_mc(
     const DistributionSpec q2_patience_runtime =
         scale_distribution_rates(params.queue2_patience, params.alpha);
 
-    const std::size_t n_reps = static_cast<std::size_t>(params.replications);
-    const std::size_t workers = mc::resolve_worker_count(params.threads, n_reps);
-
-    const auto start = std::chrono::steady_clock::now();
-
-    std::vector<double> rep_estimates(n_reps, std::numeric_limits<double>::quiet_NaN());
-    const std::uint64_t thash = tuple_hash(params);
-
-    parallel_for_index(n_reps, workers, [&](std::size_t rep) {
-        const std::uint64_t rep_seed = mc::derive_rep_seed(params.seed, thash, rep);
-        rep_estimates[rep] = simulate_one_replication(
-            rep_seed,
-            q1_arrival_runtime,
-            q1_service_runtime,
-            q2_service_runtime,
-            q2_patience_runtime,
-            params.warmup_time,
-            params.sample_time);
-    });
-
-    // Sequential ascending-index reductions: part of the bit-reproducibility
-    // contract for any thread count.
-    const double mean = mc::running_mean(rep_estimates);
-    const double std = mc::sample_std(rep_estimates, mean);
-
-    const auto end = std::chrono::steady_clock::now();
-
-    TandemWorkloadSummary summary{};
-    summary.model_name = params.model_name;
-    summary.lambda = params.lambda;
-    summary.alpha = params.alpha;
-    summary.n_reps = params.replications;
-    summary.threads_used = static_cast<int>(workers);
-    summary.seed = params.seed;
-    summary.mean_workload = mean;
-    summary.std_workload = std;
-    summary.runtime_seconds = std::chrono::duration<double>(end - start).count();
-
-    if (per_rep_estimates != nullptr) {
-        *per_rep_estimates = std::move(rep_estimates);
-    }
-
-    return summary;
+    return mc::run_replications<TandemWorkloadSummary>(
+        params.model_name,
+        params.lambda,
+        params.alpha,
+        params.replications,
+        params.threads,
+        params.seed,
+        tuple_hash(params),
+        per_rep_estimates,
+        [&](std::uint64_t rep_seed) {
+            return simulate_one_replication(
+                rep_seed,
+                q1_arrival_runtime,
+                q1_service_runtime,
+                q2_service_runtime,
+                q2_patience_runtime,
+                params.warmup_time,
+                params.sample_time);
+        });
 }
 
 }  // namespace wck

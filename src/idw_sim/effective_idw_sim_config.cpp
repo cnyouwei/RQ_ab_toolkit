@@ -66,59 +66,16 @@ std::vector<int> parse_indices(const json::Value& value, const std::string& path
     return out;
 }
 
-void reject_legacy_distribution_fields(
-    const json::Value::Object& obj,
-    const std::string& path,
-    const std::vector<std::string>& legacy) {
-    for (const std::string& key : legacy) {
-        if (optional_key(obj, key) != nullptr) {
-            fail(
-                path + "." + key,
-                "legacy field removed; use " + path + ".distribution.{family,params} instead");
-        }
-    }
-}
-
 DistributionSpec parse_model_distribution(const json::Value::Object& parent, const std::string& field) {
     const std::string path = "model." + field;
     const auto& wrapper = require_object(require_key(parent, field, "model"), path);
-
-    if (field == "arrival") {
-        reject_legacy_distribution_fields(wrapper, path, {"type", "scv", "r", "mean_interarrival"});
-    } else if (field == "service") {
-        reject_legacy_distribution_fields(wrapper, path, {"type", "mu", "c_s2"});
-    } else if (field == "patience") {
-        reject_legacy_distribution_fields(wrapper, path, {"type", "k", "beta_patience", "scv", "r", "mean"});
-    }
-
+    reject_unknown_keys(wrapper, {"distribution"}, path);
     return parse_distribution_spec(wrapper, path);
-}
-
-void reject_legacy_simulation_keys(const json::Value::Object& sim) {
-    const std::vector<std::string> legacy_keys{
-        "estimate_grid",
-        "bin_width",
-        "bin_width_large",
-        "bin_width_switch_t",
-        "overlap_stride",
-        "estimators",
-        "use_idc_overlap",
-        "use_fft",
-    };
-
-    for (const std::string& key : legacy_keys) {
-        if (optional_key(sim, key) != nullptr) {
-            fail(
-                "simulation." + key,
-                "not supported in dyadic effective-IDW mode; use {tau, max_level, n_tau_shifts, min_windows_per_t}");
-        }
-    }
 }
 
 SimulationConfig parse_simulation(const json::Value::Object& root) {
     const json::Value& sim_value = require_key(root, "simulation", "config");
     const auto& sim = require_object(sim_value, "simulation");
-    reject_legacy_simulation_keys(sim);
     reject_unknown_keys(
         sim,
         {"warmup_time", "sample_time", "tau", "max_level", "min_windows_per_t", "n_tau_shifts", "threads", "seed",
@@ -220,12 +177,6 @@ SystemConfig parse_system(const json::Value::Object& model) {
 }
 
 ScalingConfig parse_scaling(const json::Value::Object& model, const DistributionSpec& patience) {
-    if (optional_key(model, "rho_exponent") != nullptr) {
-        fail(
-            "model.rho_exponent",
-            "legacy field removed; use model.scaling.rho_exponent instead");
-    }
-
     const auto& scaling = require_object(require_key(model, "scaling", "model"), "model.scaling");
     reject_unknown_keys(scaling, {"k", "beta_patience", "rho_exponent"}, "model.scaling");
 
@@ -271,6 +222,10 @@ ScalingConfig parse_scaling(const json::Value::Object& model, const Distribution
 
 SimulationModelConfig parse_model(const json::Value& value, std::size_t idx) {
     const auto& obj = require_object(value, "models[" + std::to_string(idx) + "]");
+    reject_unknown_keys(
+        obj,
+        {"name", "w_table", "curve_label_template", "arrival", "service", "patience", "system", "scaling"},
+        "model");
     SimulationModelConfig cfg{};
 
     const json::Value* name = optional_key(obj, "name");
@@ -308,6 +263,10 @@ std::vector<SimulationModelConfig> parse_models(const json::Value::Object& root)
 EffectiveIdwSimConfig load_effective_idw_sim_config(const std::filesystem::path& path) {
     const json::Value root_value = json::parse_file(path);
     const auto& root = require_object(root_value, "config");
+    reject_unknown_keys(
+        root,
+        {"time_grid", "alpha", "simulation", "plot", "simulation_overlay", "output", "models"},
+        "config");
 
     EffectiveIdwSimConfig config{};
     config.alpha = parse_alpha(root);

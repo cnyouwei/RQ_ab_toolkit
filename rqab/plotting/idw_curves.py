@@ -30,15 +30,10 @@ from ..effective_idw import (
 )
 from ..models import parse_distribution_component
 from ..tables import WTableInterpolator, make_log_grid
-from . import style
 
 Curve = dict[str, Any]
 ModelResult = dict[str, Any]
 
-
-# ---------------------------------------------------------------------------
-# Config helpers
-# ---------------------------------------------------------------------------
 
 def parse_indices_csv(raw: str) -> list[int]:
     out: list[int] = []
@@ -207,10 +202,6 @@ def _extract_alpha(cfg: dict[str, Any]) -> tuple[list[int], float]:
     return indices, base
 
 
-# ---------------------------------------------------------------------------
-# Curve construction
-# ---------------------------------------------------------------------------
-
 def _build_model_curves(
     model_cfg: dict[str, Any],
     model_index: int,
@@ -323,7 +314,6 @@ def _build_model_curves(
         scaled_t = [(alpha ** (2.0 * h)) * tau * t for t in t_values]
         w_values = [interp.w(tilde_c, st) for st in scaled_t]
         approx = effective_idw_approx(
-            t=t_values,
             ia_t=ia_t,
             rho=rho,
             c_s2=c_s2,
@@ -367,10 +357,6 @@ def _build_model_curves(
     return {"name": name, "curves": curves, "c_x2": c_x2}
 
 
-# ---------------------------------------------------------------------------
-# Rendering
-# ---------------------------------------------------------------------------
-
 def _plot_models(
     save_path: Path,
     t_values: list[float],
@@ -379,6 +365,8 @@ def _plot_models(
     dpi: int,
     show: bool,
 ) -> None:
+    from . import style
+
     if not show:
         import matplotlib
 
@@ -549,15 +537,10 @@ def _plot_models(
         plt.show()
 
 
-# ---------------------------------------------------------------------------
-# Entry points
-# ---------------------------------------------------------------------------
-
-def run_plot_from_config_dict(
+def _run_plot_from_config(
     config: dict[str, Any],
     base_dir: Path,
     save_override: Path | None = None,
-    dpi_override: int | None = None,
     no_show_override: bool | None = None,
     config_path_for_hint: Path | None = None,
     curves_dir: Path | None = None,
@@ -587,8 +570,6 @@ def run_plot_from_config_dict(
     if no_show_override is not None:
         show = not no_show_override
     dpi = int(plot_cfg.get("dpi", 180))
-    if dpi_override is not None:
-        dpi = dpi_override
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
     # simulation_overlay.results_dir takes precedence over curves_dir.
@@ -666,27 +647,6 @@ def run_plot_from_config_dict(
     return save_path
 
 
-def run_plot_from_config_path(
-    config_path: Path,
-    save_override: Path | None = None,
-    dpi_override: int | None = None,
-    no_show_override: bool | None = None,
-    curves_dir: Path | None = None,
-    run_missing_sim: Callable[[Path, Path], None] | None = None,
-) -> Path:
-    config = _load_json(config_path)
-    return run_plot_from_config_dict(
-        config=config,
-        base_dir=config_path.resolve().parent,
-        save_override=save_override,
-        dpi_override=dpi_override,
-        no_show_override=no_show_override,
-        config_path_for_hint=config_path.resolve(),
-        curves_dir=curves_dir,
-        run_missing_sim=run_missing_sim,
-    )
-
-
 def plot_idw_effective(
     config_path: Path,
     curves_dir: Path | None = None,
@@ -707,10 +667,13 @@ def plot_idw_effective(
     config_path = Path(config_path)
     if not config_path.exists():
         raise FileNotFoundError(f"config not found: {config_path}")
-    return run_plot_from_config_path(
-        config_path=config_path,
+    resolved = config_path.resolve()
+    return _run_plot_from_config(
+        config=_load_json(resolved),
+        base_dir=resolved.parent,
         save_override=Path(out_pdf) if out_pdf is not None else None,
         no_show_override=no_show,
+        config_path_for_hint=resolved,
         curves_dir=Path(curves_dir) if curves_dir is not None else None,
         run_missing_sim=run_missing_sim,
     )

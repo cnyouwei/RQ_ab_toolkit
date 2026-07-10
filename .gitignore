@@ -23,6 +23,7 @@ CMakeFiles/
 # Generated results (reproduce.py, scripts/)
 results/
 results_quick/
+tmp/
 
 # Claude Code local settings
 .claude/settings.local.json

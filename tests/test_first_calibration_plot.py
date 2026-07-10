@@ -1,16 +1,13 @@
 """Tests for the standardized first-RQ b_k(q) figure."""
 from __future__ import annotations
 
-import importlib.util
 import math
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import helpers  # noqa: F401  # Adds the repository root to sys.path.
-
-if importlib.util.find_spec("matplotlib") is None:
-    raise unittest.SkipTest("matplotlib not installed")
 
 from rqab.first import CALIBRATION_EXACT, CALIBRATION_FLUID_FALLBACK
 from rqab.plotting.first_calibration import (
@@ -61,19 +58,23 @@ class TestFirstBCurve(unittest.TestCase):
 
 
 class TestFirstBPlot(unittest.TestCase):
-    def test_tripanel_writes_pdf(self) -> None:
-        import matplotlib
-
-        matplotlib.use("Agg", force=True)
+    def test_tripanel_adapts_sampled_curves(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             out = Path(temp_dir) / "first-rq-b.pdf"
 
-            returned = plot_first_b_tripanel(save_path=out, no_show=True)
+            with patch(
+                "rqab.plotting.first_calibration.render_calibration_tripanel",
+                return_value=out,
+            ) as render:
+                returned = plot_first_b_tripanel(save_path=out, no_show=True)
 
             self.assertEqual(returned, out)
-            self.assertTrue(out.exists())
-            self.assertGreater(out.stat().st_size, 1_000)
-            self.assertEqual(out.read_bytes()[:4], b"%PDF")
+            self.assertEqual(render.call_args.kwargs["ks"], (1, 2, 3))
+            self.assertEqual(render.call_args.kwargs["save_path"], out)
+            curves = render.call_args.kwargs["curves"]
+            self.assertEqual(len(curves), 3)
+            self.assertFalse(any(curves[0].fallback))
+            self.assertTrue(any(curves[1].fallback))
 
 
 if __name__ == "__main__":

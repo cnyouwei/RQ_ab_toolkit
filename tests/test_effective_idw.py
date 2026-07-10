@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Math-kernel tests for rqab.effective_idw (+ the w-table interpolator).
-
-Port of the pre-refactor tests/test_effective_idw.py; the golden numeric
-anchors are unchanged.  The kernel moved from scripts/effective_idw.py to
-rqab/effective_idw.py and WTableInterpolator from scripts/plot_w_overlay_k.py
-to rqab/tables.py.
-"""
+"""Math-kernel tests for effective IDW and w-table interpolation."""
 from __future__ import annotations
 
 import math
@@ -77,13 +71,11 @@ class TestIDCAndApproximation(unittest.TestCase):
         self.assertAlmostEqual(idc_large, 4.0, places=6)
 
     def test_effective_idw_identity_when_w_is_one(self) -> None:
-        t = [1.0, 2.0, 3.0]
         ia_t = [1.2, 1.8, 2.2]
         rho = 1.3
         c_s2 = 1.0
-        hat = hat_idw_refined(t=t, ia_t=ia_t, rho=rho, c_s2=c_s2)
+        hat = hat_idw_refined(ia_t=ia_t, rho=rho, c_s2=c_s2)
         approx = effective_idw_approx(
-            t=t,
             ia_t=ia_t,
             rho=rho,
             c_s2=c_s2,

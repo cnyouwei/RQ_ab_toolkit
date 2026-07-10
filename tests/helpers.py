@@ -8,6 +8,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 import csv
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -18,14 +19,11 @@ TEST_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TEST_DIR.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 CONFIGS_DIR = REPO_ROOT / "configs"
-RESULTS_DIR = REPO_ROOT / "results"
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 RUN_GRID_SCRIPT = SCRIPTS_DIR / "run_grid.py"
-W_TABLE_K1 = RESULTS_DIR / "w_table_matrix_k1.csv"
-B_TABLE_K1 = RESULTS_DIR / "b_table_k1.csv"
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -72,9 +70,67 @@ def fail_message(title: str, cmd: list[str], proc: subprocess.CompletedProcess[s
     )
 
 
-# ---------------------------------------------------------------------------
-# Payload factories
-# ---------------------------------------------------------------------------
+def write_test_w_table(path: Path) -> Path:
+    """Write a small deterministic w-table suitable for solver tests."""
+    write_csv(
+        path,
+        ["c", "0", "0.1", "10", "10000"],
+        [
+            {"c": -20.0, "0": 1.0, "0.1": 0.98, "10": 0.90, "10000": 0.85},
+            {"c": 0.0, "0": 1.0, "0.1": 0.90, "10": 0.70, "10000": 0.60},
+            {"c": 20.0, "0": 1.0, "0.1": 0.70, "10": 0.30, "10000": 0.20},
+        ],
+    )
+    return path
+
+
+def write_test_b_table(path: Path, *, k: int) -> Path:
+    """Write a status-free b-table using the current calibration schema."""
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    write_csv(
+        path,
+        ["c", "b", "psi", "z_model", "abs_error", "a_psi", "u_star"],
+        [
+            {
+                "c": -20.0,
+                "b": 1.40,
+                "psi": 0.05,
+                "z_model": "nan",
+                "abs_error": 0.0,
+                "a_psi": -20.01,
+                "u_star": 0.0025,
+            },
+            {
+                "c": 0.0,
+                "b": 1.0,
+                "psi": 0.5,
+                "z_model": 0.5,
+                "abs_error": 0.0,
+                "a_psi": -0.5,
+                "u_star": 0.5,
+            },
+            {
+                "c": 20.0,
+                "b": math.sqrt(2.0) if k == 1 else 0.0,
+                "psi": 1.0,
+                "z_model": "nan",
+                "abs_error": 0.1,
+                "a_psi": 0.01,
+                "u_star": "nan",
+            },
+        ],
+    )
+    return path
+
+
+def write_test_calibration_tables(root: Path, *, k: int) -> tuple[Path, Path]:
+    """Return explicit temporary (w-table, b-table) paths for a patience index."""
+    return (
+        write_test_w_table(root / f"w_table_k{k}.csv"),
+        write_test_b_table(root / f"b_table_k{k}.csv", k=k),
+    )
+
 
 def tiny_grid_payload() -> dict:
     """Three (lambda, alpha) tuples spanning under-, critically- and over-loaded."""

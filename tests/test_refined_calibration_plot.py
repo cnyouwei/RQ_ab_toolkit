@@ -9,63 +9,51 @@ from unittest.mock import patch
 
 import helpers
 
-if importlib.util.find_spec("matplotlib") is None:
-    raise unittest.SkipTest("matplotlib not installed")
-
+from rqab.plotting.calibration_tripanel import (  # noqa: E402
+    CalibrationPlotCurve,
+    render_calibration_tripanel,
+)
 from rqab.plotting.diagnostics import (  # noqa: E402
-    _read_refined_b_curve,
+    _read_b_curve,
     plot_refined_b_tripanel,
 )
 
 
-FIELDS = [
-    "c",
-    "b",
-    "status",
-    "psi",
-    "z_model",
-    "abs_error",
-    "a_psi",
-    "u_star",
-]
+FIELDS = ["c", "b", "a_psi"]
 
 
-def _write_table(path: Path, k: int, c_min: float = -2.0, c_max: float = 2.0) -> None:
+def _write_table(
+    path: Path,
+    k: int,
+    c_min: float = -2.0,
+    c_max: float = 2.0,
+    *,
+    include_status: bool = False,
+) -> None:
     fallback_b = 2.0**0.5 if k == 1 else 0.0
     capped_b = 2.0**0.5 if k == 1 else 1.35
+    fieldnames = FIELDS + (["status"] if include_status else [])
     helpers.write_csv(
         path,
-        FIELDS,
+        fieldnames,
         [
             {
                 "c": c_max,
                 "b": fallback_b,
-                "status": "exact",
-                "psi": 1.0,
-                "z_model": "nan",
-                "abs_error": 0.1,
                 "a_psi": 0.01,
-                "u_star": "nan",
+                **({"status": "exact"} if include_status else {}),
             },
             {
                 "c": 1.0,
                 "b": capped_b,
-                "status": "exact",
-                "psi": 1.0,
-                "z_model": "nan",
-                "abs_error": 0.0,
                 "a_psi": -0.01,
-                "u_star": "nan",
+                **({"status": "ignored"} if include_status else {}),
             },
             {
                 "c": c_min,
                 "b": 1.40,
-                "status": "exact",
-                "psi": 0.2,
-                "z_model": "nan",
-                "abs_error": 0.0,
                 "a_psi": -2.1,
-                "u_star": 0.2,
+                **({"status": "unused"} if include_status else {}),
             },
         ],
     )
@@ -77,23 +65,20 @@ class TestRefinedBCurve(unittest.TestCase):
             table = Path(temp_dir) / "b.csv"
             _write_table(table, k=1)
 
-            curve = _read_refined_b_curve(table)
+            curve = _read_b_curve(table)
 
             self.assertEqual(curve.x, (-2.0, 1.0, 2.0))
             self.assertEqual(curve.b, (1.4, 2.0**0.5, 2.0**0.5))
             self.assertEqual(curve.fallback, (False, False, True))
 
-    def test_legacy_best_fit_row_is_fallback(self) -> None:
+    def test_optional_status_column_is_ignored(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            table = Path(temp_dir) / "legacy.csv"
-            _write_table(table, k=2)
-            rows, _fields = helpers.read_csv_rows(table)
-            rows[1]["status"] = "best_fit"
-            helpers.write_csv(table, FIELDS, rows)
+            table = Path(temp_dir) / "with-status.csv"
+            _write_table(table, k=2, include_status=True)
 
-            curve = _read_refined_b_curve(table)
+            curve = _read_b_curve(table)
 
-            self.assertEqual(curve.fallback, (False, True, True))
+            self.assertEqual(curve.fallback, (False, False, True))
 
     def test_tripanel_validates_k_and_table_counts(self) -> None:
         with self.assertRaises(ValueError):
@@ -127,22 +112,33 @@ class TestRefinedBCurve(unittest.TestCase):
             self.assertEqual(render.call_args.kwargs["x_max"], 4.0)
 
 
-class TestRefinedBPlot(unittest.TestCase):
-    def test_tripanel_writes_pdf(self) -> None:
+class TestCalibrationRenderer(unittest.TestCase):
+    @unittest.skipUnless(
+        importlib.util.find_spec("matplotlib") is not None,
+        "matplotlib not installed",
+    )
+    def test_shared_renderer_writes_pdf(self) -> None:
         import matplotlib
 
         matplotlib.use("Agg", force=True)
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            tables = []
-            for k in (1, 2, 3):
-                table = root / f"b{k}.csv"
-                _write_table(table, k=k)
-                tables.append(table)
-            out = root / "refined-rq-b.pdf"
+            out = root / "calibration.pdf"
+            curve = CalibrationPlotCurve(
+                x=(-2.0, 0.0, 2.0),
+                b=(1.4, 1.0, 0.0),
+                fallback=(False, False, True),
+            )
 
-            returned = plot_refined_b_tripanel(
-                table_paths=tables,
+            returned = render_calibration_tripanel(
+                ks=(1, 2, 3),
+                curves=(curve, curve, curve),
+                x_min=-2.0,
+                x_max=2.0,
+                x_label="load",
+                y_label="b",
+                calibrated_label="calibrated",
+                fallback_label="fallback",
                 save_path=out,
                 no_show=True,
             )

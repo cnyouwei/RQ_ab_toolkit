@@ -3,7 +3,6 @@
 #include "wck/common/parallel.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
@@ -11,7 +10,6 @@
 #include <iomanip>
 #include <limits>
 #include <stdexcept>
-#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -21,7 +19,7 @@ namespace wck {
 namespace {
 
 constexpr double kSqrt2 = 1.4142135623730950488;
-constexpr double kBestFitThreshold = -1e-12;
+constexpr double kFeasibilityThreshold = -1e-12;
 constexpr double kCapTolerance = 1e-12;
 constexpr int kCoarseGridPoints = 4001;
 constexpr double kLogUMin = -16.0;
@@ -29,52 +27,6 @@ constexpr double kLogUMax = 18.0;
 constexpr double kPsiLogTailCutoff = 80.0;
 constexpr double kPsiSimpsonEps = 1e-14;
 constexpr int kPsiSimpsonMaxDepth = 40;
-
-std::string trim_copy(const std::string& text) {
-    std::size_t begin = 0U;
-    while (begin < text.size() && std::isspace(static_cast<unsigned char>(text[begin])) != 0) {
-        ++begin;
-    }
-
-    std::size_t end = text.size();
-    while (end > begin && std::isspace(static_cast<unsigned char>(text[end - 1U])) != 0) {
-        --end;
-    }
-    return text.substr(begin, end - begin);
-}
-
-std::vector<std::string> split_csv_fields(const std::string& line) {
-    std::vector<std::string> fields{};
-    std::size_t start = 0U;
-    while (start <= line.size()) {
-        const std::size_t comma = line.find(',', start);
-        const std::size_t end = (comma == std::string::npos) ? line.size() : comma;
-        fields.push_back(line.substr(start, end - start));
-        if (comma == std::string::npos) {
-            break;
-        }
-        start = comma + 1U;
-    }
-    return fields;
-}
-
-double parse_double_strict(const std::string& text, const std::string& context, bool allow_nonfinite = false) {
-    const std::string trimmed = trim_copy(text);
-    std::size_t parsed = 0U;
-    double value = 0.0;
-    try {
-        value = std::stod(trimmed, &parsed);
-    } catch (...) {
-        throw std::invalid_argument("invalid numeric value for " + context + ": " + text);
-    }
-    if (parsed != trimmed.size()) {
-        throw std::invalid_argument("invalid numeric value for " + context + ": " + text);
-    }
-    if (!allow_nonfinite && !std::isfinite(value)) {
-        throw std::invalid_argument("non-finite numeric value for " + context + ": " + text);
-    }
-    return value;
-}
 
 long double inverse_factorial(int n) {
     if (n < 0) {
@@ -357,27 +309,6 @@ std::pair<double, double> compute_exact_b_and_u_star(
 
 }  // namespace
 
-const char* b_calibration_status_name(BCalibrationStatus status) {
-    switch (status) {
-    case BCalibrationStatus::kExact:
-        return "exact";
-    case BCalibrationStatus::kBestFit:
-        return "best_fit";
-    }
-    return "unknown";
-}
-
-BCalibrationStatus parse_b_calibration_status(const std::string& text) {
-    const std::string value = trim_copy(text);
-    if (value == "exact") {
-        return BCalibrationStatus::kExact;
-    }
-    if (value == "best_fit") {
-        return BCalibrationStatus::kBestFit;
-    }
-    throw std::invalid_argument("unknown b calibration status: " + text);
-}
-
 std::vector<double> build_c_grid(double c_min, double c_max, double dc) {
     if (!(dc > 0.0)) {
         throw std::invalid_argument("dc must be > 0");
@@ -446,10 +377,9 @@ BCalibrationResult calibrate_b_table(
         row.psi = psi;
         row.a_psi = a_psi;
 
-        if (a_psi < kBestFitThreshold) {
+        if (a_psi < kFeasibilityThreshold) {
             const double tilde_c = c * c_scale;
             const auto [b_value, u_star] = compute_exact_b_and_u_star(psi, a_psi, tilde_c, tau, w_table);
-            row.status = BCalibrationStatus::kExact;
             if (b_value <= kSqrt2 + kCapTolerance) {
                 row.b = b_value;
                 row.u_star = u_star;
@@ -463,7 +393,6 @@ BCalibrationResult calibrate_b_table(
         } else {
             // If exact matching is infeasible, use k-dependent fallback:
             // k>1 -> b=0, k=1 -> b=sqrt(2).
-            row.status = BCalibrationStatus::kExact;
             row.b = (k > 1) ? 0.0 : kSqrt2;
             if (c > 0.0) {
                 row.z_model = std::pow(c / beta, 1.0 / static_cast<double>(k));
@@ -507,11 +436,10 @@ void write_b_calibration_table_csv(const std::filesystem::path& path, const BCal
     }
 
     out << std::setprecision(17) << std::scientific;
-    out << "c,b,status,psi,z_model,abs_error,a_psi,u_star\n";
+    out << "c,b,psi,z_model,abs_error,a_psi,u_star\n";
     for (const auto& row : result.rows) {
         out << row.c << ','
             << row.b << ','
-            << b_calibration_status_name(row.status) << ','
             << row.psi << ','
             << row.z_model << ','
             << row.abs_error << ','
@@ -522,101 +450,6 @@ void write_b_calibration_table_csv(const std::filesystem::path& path, const BCal
     if (!out.good()) {
         throw std::runtime_error("failed while writing output file: " + path.string());
     }
-}
-
-BCalibrationTable load_b_calibration_table_csv(const std::filesystem::path& path) {
-    std::ifstream in(path);
-    if (!in.is_open()) {
-        throw std::runtime_error("failed to open b calibration table: " + path.string());
-    }
-
-    std::string header{};
-    if (!std::getline(in, header)) {
-        throw std::invalid_argument("b calibration table is empty: " + path.string());
-    }
-    const std::string expected_header = "c,b,status,psi,z_model,abs_error,a_psi,u_star";
-    if (trim_copy(header) != expected_header) {
-        throw std::invalid_argument("unexpected b calibration header in " + path.string());
-    }
-
-    BCalibrationTable out{};
-    std::string line{};
-    std::size_t line_number = 1U;
-    while (std::getline(in, line)) {
-        ++line_number;
-        if (trim_copy(line).empty()) {
-            continue;
-        }
-        const std::vector<std::string> fields = split_csv_fields(line);
-        if (fields.size() != 8U) {
-            throw std::invalid_argument(
-                "csv parse error at line " + std::to_string(line_number) + ": expected 8 fields");
-        }
-
-        BCalibrationRow row{};
-        row.c = parse_double_strict(fields[0], "c at line " + std::to_string(line_number));
-        row.b = parse_double_strict(fields[1], "b at line " + std::to_string(line_number));
-        row.status = parse_b_calibration_status(fields[2]);
-        row.psi = parse_double_strict(fields[3], "psi at line " + std::to_string(line_number));
-        row.z_model = parse_double_strict(fields[4], "z_model at line " + std::to_string(line_number), true);
-        row.abs_error = parse_double_strict(fields[5], "abs_error at line " + std::to_string(line_number), true);
-        row.a_psi = parse_double_strict(fields[6], "a_psi at line " + std::to_string(line_number));
-        row.u_star = parse_double_strict(fields[7], "u_star at line " + std::to_string(line_number), true);
-        out.rows.push_back(row);
-    }
-
-    if (out.rows.empty()) {
-        throw std::invalid_argument("b calibration table has no data rows: " + path.string());
-    }
-
-    std::sort(out.rows.begin(), out.rows.end(), [](const BCalibrationRow& lhs, const BCalibrationRow& rhs) {
-        return lhs.c < rhs.c;
-    });
-    for (std::size_t i = 0U; i + 1U < out.rows.size(); ++i) {
-        if (!(out.rows[i + 1U].c > out.rows[i].c)) {
-            throw std::invalid_argument("b calibration c-grid must be strictly increasing");
-        }
-    }
-
-    return out;
-}
-
-double BCalibrationTable::evaluate(double c) const {
-    if (rows.empty()) {
-        throw std::runtime_error("b calibration table is empty");
-    }
-
-    if (c < rows.front().c) {
-        return kSqrt2;
-    }
-    if (c > rows.back().c) {
-        return rows.back().b;
-    }
-    if (c == rows.front().c) {
-        return rows.front().b;
-    }
-
-    auto it = std::upper_bound(rows.begin(), rows.end(), c, [](double value, const BCalibrationRow& row) {
-        return value < row.c;
-    });
-    if (it == rows.begin()) {
-        return rows.front().b;
-    }
-    if (it == rows.end()) {
-        return rows.back().b;
-    }
-
-    const BCalibrationRow& right = *it;
-    const BCalibrationRow& left = *(it - 1);
-    if (std::abs(c - left.c) <= 1e-14) {
-        return left.b;
-    }
-    if (std::abs(right.c - c) <= 1e-14) {
-        return right.b;
-    }
-
-    const double theta = (c - left.c) / (right.c - left.c);
-    return (1.0 - theta) * left.b + theta * right.b;
 }
 
 }  // namespace wck

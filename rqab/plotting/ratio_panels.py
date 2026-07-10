@@ -12,14 +12,8 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from .style import DIVERGING_CMAP, SINGLE_PANEL_CMAP, make_norm, setup_rcparams
-
 Panel = tuple[str, list[list[float]]]
 
-
-# ---------------------------------------------------------------------------
-# CSV loaders
-# ---------------------------------------------------------------------------
 
 def load_workload_rows(path: Path) -> dict[int, dict[str, Any]]:
     """Load the workload-MC aggregate CSV keyed by tuple_id."""
@@ -81,14 +75,9 @@ def load_z_rows(
 
 
 def load_combined_secondary_rows(path: Path) -> tuple[dict[int, dict[str, Any]], str]:
-    """Load the secondary-method (WG or Hazard) and HG columns.
+    """Load secondary and HG values from a refined aggregate CSV.
 
-    Reads the combined refined/other aggregate CSV and returns
-    ``(rows, method_title)`` where each row is
-    ``{"secondary_method", "z_secondary", "z_hg"}`` keyed by tuple_id.
-    Values whose status column does not start with "ok" become NaN.  Both
-    The accepted Ward--Glynn labels "wg" and "gw" share the display title
-    "WG".
+    Non-ok values become NaN; ``wg`` and ``gw`` both display as ``WG``.
     """
     if not path.exists():
         raise FileNotFoundError(f"combined aggregate CSV not found: {path}")
@@ -146,10 +135,6 @@ def load_combined_secondary_rows(path: Path) -> tuple[dict[int, dict[str, Any]],
         method_title = "WG"
     return other_rows, method_title
 
-
-# ---------------------------------------------------------------------------
-# Grid builder
-# ---------------------------------------------------------------------------
 
 def build_panel_grid(
     workload_rows: dict[int, dict[str, Any]],
@@ -275,10 +260,6 @@ def build_c_grid(
     return patience_values, lambda_values, grid
 
 
-# ---------------------------------------------------------------------------
-# Renderer
-# ---------------------------------------------------------------------------
-
 def render_ratio_panels(
     patience_values: list[float],
     lambda_values: list[float],
@@ -299,6 +280,8 @@ def render_ratio_panels(
     * 2 panels: 7.2x4
     * 3 panels: 10x4, with the figure title centered on the middle panel
     """
+    from .style import DIVERGING_CMAP, SINGLE_PANEL_CMAP, make_norm, setup_rcparams
+
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -435,14 +418,6 @@ def render_ratio_panels(
         plt.show()
 
 
-# ---------------------------------------------------------------------------
-# Panel presets
-#
-# The CLI/reproduce layer resolves the model alias, base mean patience and
-# plot title (rqab.models.model_plot_metadata) and passes explicit CSV
-# paths; these presets only load CSVs and plot.
-# ---------------------------------------------------------------------------
-
 def figure_ratio(
     workload_csv: Path,
     refined_csv: Path,
@@ -499,6 +474,8 @@ def figure_c_heatmap(
     diverging norm centered at c = 0.
     Canonical output name: results/c_heatmap_<alias>.pdf
     """
+    from .style import DIVERGING_CMAP, setup_rcparams
+
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib import colors

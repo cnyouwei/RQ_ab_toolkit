@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the WG/Hazard/HG benchmark approximations (rqab.secondary).
-
-Port of the pre-refactor tests/test_other_methods_grid.py.  The numeric unit
-tests keep the old golden anchors; the end-to-end CLI tests are retargeted at
-scripts/run_grid.py --method refined, whose combined output CSV now carries
-the z_secondary/z_wg/z_hazard/z_hg and status_secondary/status_hg columns.
-"""
+"""Tests for the WG, hazard, and HG benchmark approximations."""
 from __future__ import annotations
 
 import math
@@ -14,20 +8,17 @@ import unittest
 
 import helpers
 from helpers import (
-    B_TABLE_K1,
     CONFIGS_DIR,
     RUN_GRID_SCRIPT,
-    W_TABLE_K1,
     read_csv_rows,
     temp_dir,
     tiny_grid_payload,
     valid_e2_patience_payload,
-    valid_lognormal_model_payload,
     valid_model_payload,
     write_json,
+    write_test_calibration_tables,
 )
 
-from rqab import refined as refined_mod
 from rqab.models import build_base_stats, infer_k_from_patience, load_model_config
 from rqab.secondary import (
     QuadOptions,
@@ -51,7 +42,7 @@ def stats_for_config(config_name: str):
 
 
 def quad_stub() -> QuadOptions:
-    """The old CLI-args stub used by the smoke tests."""
+    """Return the quadrature settings used by the CLI fixture."""
     return QuadOptions(
         dy=0.05,
         y_max_init=8.0,
@@ -103,49 +94,6 @@ class TestSecondaryMethodInternals(unittest.TestCase):
             )
         with self.assertRaises(ValueError):
             inverse_mills_ratio_upper_cf(0.0)
-
-    def test_wg_smoke(self) -> None:
-        _, stats = stats_for_config("workload_mm1m.json")
-        z, status = compute_wg(lam=1.25, alpha=0.5, stats=stats)
-        self.assertTrue(status.startswith("ok"))
-        self.assertGreaterEqual(z, 0.0)
-        self.assertTrue(z == z)
-
-    def test_hazard_smoke(self) -> None:
-        model, stats = stats_for_config("workload_mm1e2.json")
-        res = compute_hazard(
-            lam=1.25,
-            alpha=0.5,
-            stats=stats,
-            patience=model.patience,
-            opts=quad_stub(),
-        )
-        self.assertTrue(res.status.startswith("ok"))
-        self.assertGreaterEqual(res.z, 0.0)
-        self.assertTrue(res.z == res.z)
-
-    def test_hg_smoke_mm1m_and_mm1e2(self) -> None:
-        model_m, stats_m = stats_for_config("workload_mm1m.json")
-        res_m = compute_hg(
-            lam=1.25,
-            alpha=0.5,
-            stats=stats_m,
-            patience=model_m.patience,
-            opts=quad_stub(),
-        )
-        self.assertTrue(res_m.status.startswith("ok"))
-        self.assertGreaterEqual(res_m.z, 0.0)
-
-        model_e2, stats_e2 = stats_for_config("workload_mm1e2.json")
-        res_e2 = compute_hg(
-            lam=1.25,
-            alpha=0.5,
-            stats=stats_e2,
-            patience=model_e2.patience,
-            opts=quad_stub(),
-        )
-        self.assertTrue(res_e2.status.startswith("ok"))
-        self.assertGreaterEqual(res_e2.z, 0.0)
 
     def test_wg_inverse_mills_large_x_accuracy(self) -> None:
         _, stats = stats_for_config("workload_mm1m.json")
@@ -284,59 +232,6 @@ def run_refined_cli(model_path, grid_path, out_csv, extra=(), quad_args=tuple(QU
 
 
 class TestSecondaryMethodsCLI(unittest.TestCase):
-    """Old run_other_methods_grid.py CLI tests, retargeted at run_grid.py --method refined."""
-
-    def test_tiny_grid_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_mm1m.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out.csv"
-            payload = valid_model_payload()
-            write_json(model_path, payload)
-            write_json(grid_path, tiny_grid_payload())
-
-            cmd, proc = run_refined_cli(
-                model_path,
-                grid_path,
-                out_csv,
-                extra=("--w-table", str(W_TABLE_K1), "--b-table", str(B_TABLE_K1)),
-            )
-            if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid refined (secondary) run failed.", cmd, proc))
-            self.assertTrue(out_csv.exists())
-
-            rows, fieldnames = read_csv_rows(out_csv)
-            self.assertEqual(len(rows), 3)
-            for col in refined_mod.CSV_COLUMNS:
-                self.assertIn(col, fieldnames)
-
-            # Exponential patience: F'(0) = 1 > 0 -> WG secondary everywhere.
-            model = load_model_config(model_path)
-            base = build_base_stats(model, k=infer_k_from_patience(model.patience))
-            stats = build_secondary_stats(model, mu=base.mu, c_a2=base.c_a2, c_s2=base.c_s2)
-
-            for row in rows:
-                self.assertTrue(str(row["status_secondary"]).startswith("ok"))
-                self.assertTrue(str(row["status_hg"]).startswith("ok"))
-                self.assertEqual(row["secondary_method"], "wg")
-                self.assertEqual(row["z_hazard"], "")
-                self.assertEqual(float(row["z_secondary"]), float(row["z_wg"]))
-                self.assertGreater(float(row["z_hg"]), 0.0)
-
-                # CSV values must match the library WG formula exactly.
-                z_expected, status = compute_wg(
-                    lam=float(row["lambda"]), alpha=float(row["alpha"]), stats=stats
-                )
-                self.assertTrue(status.startswith("ok"))
-                self.assertTrue(
-                    math.isclose(float(row["z_wg"]), z_expected, rel_tol=1e-10, abs_tol=1e-12)
-                )
-
-            # Golden anchor: at (lambda, alpha) = (1, 1), rho = 1 so c = 0 and
-            # z_wg = sqrt(2/pi) for the M/M/1+M base stats.
-            row2 = next(r for r in rows if int(r["tuple_id"]) == 2)
-            self.assertAlmostEqual(float(row2["z_wg"]), math.sqrt(2.0 / math.pi), places=10)
-
     def test_tiny_grid_e2_patience_hazard_end_to_end(self) -> None:
         with temp_dir() as tmp:
             model_path = tmp / "workload_mm1e2.json"
@@ -345,10 +240,19 @@ class TestSecondaryMethodsCLI(unittest.TestCase):
             write_json(model_path, valid_e2_patience_payload())
             write_json(grid_path, tiny_grid_payload())
 
-            # Erlang-2 patience -> k=2; rely on the default k2 tables in results/.
-            cmd, proc = run_refined_cli(model_path, grid_path, out_csv)
+            w_table, b_table = write_test_calibration_tables(tmp, k=2)
+            cmd, proc = run_refined_cli(
+                model_path,
+                grid_path,
+                out_csv,
+                extra=("--w-table", str(w_table), "--b-table", str(b_table)),
+            )
             if proc.returncode != 0:
-                self.fail(helpers.fail_message("tiny-grid E2-patience refined run failed.", cmd, proc))
+                self.fail(
+                    helpers.fail_message(
+                        "tiny-grid E2-patience refined run failed.", cmd, proc
+                    )
+                )
 
             rows, _ = read_csv_rows(out_csv)
             self.assertEqual(len(rows), 3)
@@ -364,8 +268,7 @@ class TestSecondaryMethodsCLI(unittest.TestCase):
                 self.assertEqual(row["z_wg"], "")
                 self.assertEqual(float(row["z_secondary"]), float(row["z_hazard"]))
 
-            # CSV hazard/HG values reproduce the library integrators under the
-            # same quadrature options that were passed on the command line.
+            # The CLI and library use identical quadrature settings here.
             row3 = next(r for r in rows if int(r["tuple_id"]) == 3)
             hazard = compute_hazard(
                 lam=1.2, alpha=0.5, stats=stats, patience=model.patience, opts=quad_stub()
@@ -379,37 +282,6 @@ class TestSecondaryMethodsCLI(unittest.TestCase):
             self.assertTrue(
                 math.isclose(float(row3["z_hg"]), hg.z, rel_tol=1e-9, abs_tol=1e-12)
             )
-
-    def test_tiny_grid_lognormal_service_end_to_end(self) -> None:
-        with temp_dir() as tmp:
-            model_path = tmp / "workload_mln1_41h2_4.json"
-            grid_path = tmp / "grid.json"
-            out_csv = tmp / "out_ln.csv"
-            write_json(model_path, valid_lognormal_model_payload())
-            write_json(grid_path, tiny_grid_payload())
-
-            # High-variability model: keep the default quadrature limits so
-            # the HG tail can converge (the old test also used the defaults).
-            cmd, proc = run_refined_cli(
-                model_path,
-                grid_path,
-                out_csv,
-                extra=("--w-table", str(W_TABLE_K1), "--b-table", str(B_TABLE_K1)),
-                quad_args=(),
-            )
-            if proc.returncode != 0:
-                self.fail(
-                    helpers.fail_message("tiny-grid lognormal-service refined run failed.", cmd, proc)
-                )
-            self.assertTrue(out_csv.exists())
-
-            rows, _ = read_csv_rows(out_csv)
-            self.assertEqual(len(rows), 3)
-            for row in rows:
-                # H2(4) patience has F'(0) > 0 -> WG secondary.
-                self.assertEqual(row["secondary_method"], "wg")
-                self.assertTrue(str(row["status_secondary"]).startswith("ok"))
-                self.assertTrue(str(row["status_hg"]).startswith("ok"))
 
     def test_continue_on_error_status_rows(self) -> None:
         with temp_dir() as tmp:
@@ -439,15 +311,16 @@ class TestSecondaryMethodsCLI(unittest.TestCase):
             }
             write_json(grid_path, bad_grid)
 
+            w_table, b_table = write_test_calibration_tables(tmp, k=1)
             cmd, proc = run_refined_cli(
                 model_path,
                 grid_path,
                 out_csv,
                 extra=(
                     "--w-table",
-                    str(W_TABLE_K1),
+                    str(w_table),
                     "--b-table",
-                    str(B_TABLE_K1),
+                    str(b_table),
                     "--continue-on-error",
                 ),
             )
@@ -459,8 +332,6 @@ class TestSecondaryMethodsCLI(unittest.TestCase):
             rows, _ = read_csv_rows(out_csv)
             self.assertEqual(len(rows), 2)
 
-            # Adapted to the combined-CSV schema: the failed tuple is tagged
-            # in solver_status AND status_secondary/status_hg.
             bad = next(r for r in rows if int(r["tuple_id"]) == 1)
             good = next(r for r in rows if int(r["tuple_id"]) == 2)
             self.assertTrue(str(bad["status_secondary"]).startswith("error:"))

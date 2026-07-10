@@ -25,22 +25,54 @@ class TestReproductionPlan(unittest.TestCase):
         self.addCleanup(provenance_patcher.stop)
         self.ctx = reproduce.Context(quick=False, threads=None)
 
-    def test_heatmap_target_includes_first_vs_refined_panels(self) -> None:
-        plan = reproduce.Plan()
+    def test_targets_expand_to_expected_steps(self) -> None:
+        mm1_steps = {
+            f"{kind}:{model}"
+            for model in ("mm1m", "mm1e2", "mm1h2_4")
+            for kind in ("tripanel", "twopanel", "first")
+        }
+        cases = (
+            ("mm1-gi", mm1_steps),
+            ("first-b", {"first-rq-b-tripanel"}),
+            ("refined-b", {"refined-rq-b-tripanel"}),
+            ("aux", {"first-rq-b-tripanel", "refined-rq-b-tripanel"}),
+            ("all", set()),
+        )
+        plans: dict[str, reproduce.Plan] = {}
+        for target, required_steps in cases:
+            with self.subTest(target=target):
+                plan = reproduce.Plan()
+                self.assertTrue(reproduce.expand_target(plan, self.ctx, target))
+                self.assertTrue(required_steps.issubset(plan.steps))
+                plans[target] = plan
 
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "mm1-gi"))
+        first_step = plans["first-b"].steps["first-rq-b-tripanel"]
+        self.assertEqual(set(plans["first-b"].steps), {"first-rq-b-tripanel"})
+        self.assertEqual(
+            first_step.outputs,
+            [self.ctx.results / "first_rq_b_tripanel.pdf"],
+        )
+        self.assertEqual(first_step.deps, ())
+        self.assertFalse(first_step.heavy)
 
-        for model in ("mm1m", "mm1e2", "mm1h2_4"):
-            self.assertIn(f"tripanel:{model}", plan.steps)
-            self.assertIn(f"twopanel:{model}", plan.steps)
-            self.assertIn(f"first:{model}", plan.steps)
+        refined_plan = plans["refined-b"]
+        refined_step = refined_plan.steps["refined-rq-b-tripanel"]
+        self.assertEqual(
+            refined_step.outputs,
+            [self.ctx.results / "refined_rq_b_tripanel.pdf"],
+        )
+        self.assertEqual(
+            refined_step.deps,
+            ("b-table:k1", "b-table:k2", "b-table:k3"),
+        )
+        self.assertFalse(refined_step.heavy)
+        for k in (1, 2, 3):
+            self.assertIn(f"w-table:k{k}", refined_plan.steps)
+            self.assertIn(f"b-table:k{k}", refined_plan.steps)
 
-    def test_all_includes_ten_twopanel_figures(self) -> None:
-        plan = reproduce.Plan()
-
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "all"))
-
-        twopanel_steps = [key for key in plan.steps if key.startswith("twopanel:")]
+        twopanel_steps = [
+            key for key in plans["all"].steps if key.startswith("twopanel:")
+        ]
         self.assertEqual(len(twopanel_steps), 10)
 
     def test_idw_plot_is_recreated_without_forcing_simulation(self) -> None:
@@ -52,50 +84,6 @@ class TestReproductionPlan(unittest.TestCase):
         plot_step = plan.steps["idw-plot:effective_idw_h2m1m"]
         self.assertTrue(plot_step.always)
         self.assertNotIn("idw-sim:effective_idw_h2m1m", plan.steps)
-
-    def test_first_b_target_is_a_lightweight_tripanel(self) -> None:
-        plan = reproduce.Plan()
-
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "first-b"))
-
-        self.assertEqual(set(plan.steps), {"first-rq-b-tripanel"})
-        step = plan.steps["first-rq-b-tripanel"]
-        self.assertEqual(step.outputs, [self.ctx.results / "first_rq_b_tripanel.pdf"])
-        self.assertEqual(step.deps, ())
-        self.assertFalse(step.heavy)
-
-    def test_aux_includes_first_b_tripanel(self) -> None:
-        plan = reproduce.Plan()
-
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "aux"))
-
-        self.assertIn("first-rq-b-tripanel", plan.steps)
-
-    def test_refined_b_target_depends_on_all_three_tables(self) -> None:
-        plan = reproduce.Plan()
-
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "refined-b"))
-
-        step = plan.steps["refined-rq-b-tripanel"]
-        self.assertEqual(
-            step.outputs,
-            [self.ctx.results / "refined_rq_b_tripanel.pdf"],
-        )
-        self.assertEqual(
-            step.deps,
-            ("b-table:k1", "b-table:k2", "b-table:k3"),
-        )
-        self.assertFalse(step.heavy)
-        for k in (1, 2, 3):
-            self.assertIn(f"w-table:k{k}", plan.steps)
-            self.assertIn(f"b-table:k{k}", plan.steps)
-
-    def test_aux_includes_refined_b_tripanel(self) -> None:
-        plan = reproduce.Plan()
-
-        self.assertTrue(reproduce.expand_target(plan, self.ctx, "aux"))
-
-        self.assertIn("refined-rq-b-tripanel", plan.steps)
 
 
 class TestWorkloadProvenance(unittest.TestCase):
@@ -144,28 +132,37 @@ class TestWorkloadProvenance(unittest.TestCase):
                 reproduce.check_workload_provenance(self.csv_path, self.config_path)
         return stderr.getvalue()
 
-    def test_matching_simulation_provenance_emits_no_warning(self) -> None:
-        self.write_csv()
-
-        self.assertEqual(self.provenance_warning(), "")
-
-    def test_timing_mismatch_requests_regeneration(self) -> None:
-        self.write_csv(warmup_time=50.0, sample_time=500.0)
-
-        warning = self.provenance_warning()
-        self.assertIn("warmup_time 50.0 != config warmup_time 100.0", warning)
-        self.assertIn("sample_time 500.0 != config sample_time 1000.0", warning)
-        self.assertIn("--force to regenerate", warning)
-
-    def test_legacy_aggregate_reports_missing_timing_provenance(self) -> None:
-        self.write_csv(include_timing=False)
-
-        warning = self.provenance_warning()
-        self.assertIn(
-            "legacy aggregate missing simulation provenance columns warmup_time,sample_time",
-            warning,
+    def test_provenance_warnings(self) -> None:
+        cases = (
+            ("matching", True, {}, ()),
+            (
+                "timing-mismatch",
+                True,
+                {"warmup_time": 50.0, "sample_time": 500.0},
+                (
+                    "warmup_time 50.0 != config warmup_time 100.0",
+                    "sample_time 500.0 != config sample_time 1000.0",
+                    "--force to regenerate",
+                ),
+            ),
+            (
+                "missing-timing",
+                False,
+                {},
+                (
+                    "missing simulation provenance columns warmup_time,sample_time",
+                    "--force to regenerate",
+                ),
+            ),
         )
-        self.assertIn("--force to regenerate", warning)
+        for label, include_timing, overrides, expected in cases:
+            with self.subTest(case=label):
+                self.write_csv(include_timing=include_timing, **overrides)
+                warning = self.provenance_warning()
+                if not expected:
+                    self.assertEqual(warning, "")
+                for message in expected:
+                    self.assertIn(message, warning)
 
     def test_workload_aggregate_retains_timing_provenance(self) -> None:
         binary = self.root / "workload_mc"

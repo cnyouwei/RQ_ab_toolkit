@@ -46,7 +46,7 @@ def main() -> int:
         return 2
 
     try:
-        from rqab.plotting import plot_refined_b_tripanel
+        from rqab.plotting.diagnostics import plot_refined_b_tripanel
     except ModuleNotFoundError as exc:
         print(f"error: plotting dependencies unavailable ({exc})", file=sys.stderr)
         return 1

@@ -4,23 +4,13 @@
 
 #include <cstddef>
 #include <filesystem>
-#include <string>
 #include <vector>
 
 namespace wck {
 
-enum class BCalibrationStatus {
-    kExact,
-    kBestFit,
-};
-
-const char* b_calibration_status_name(BCalibrationStatus status);
-BCalibrationStatus parse_b_calibration_status(const std::string& text);
-
 struct BCalibrationRow {
     double c = 0.0;
     double b = 0.0;
-    BCalibrationStatus status = BCalibrationStatus::kExact;
     double psi = 0.0;
     double z_model = 0.0;
     double abs_error = 0.0;
@@ -48,13 +38,5 @@ BCalibrationResult calibrate_b_table(
     std::size_t thread_count = 0U);
 
 void write_b_calibration_table_csv(const std::filesystem::path& path, const BCalibrationResult& result);
-
-struct BCalibrationTable {
-    std::vector<BCalibrationRow> rows{};
-
-    double evaluate(double c) const;
-};
-
-BCalibrationTable load_b_calibration_table_csv(const std::filesystem::path& path);
 
 }  // namespace wck

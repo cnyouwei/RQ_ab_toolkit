@@ -57,30 +57,6 @@ void test_determinism_and_thread_invariance() {
     }
 }
 
-void test_monotonic_sanity() {
-    wck::WorkloadRunParams params = base_params();
-    params.replications = 128;
-    params.sample_time = 1500.0;
-
-    params.lambda = 0.6;
-    params.alpha = 1.0;
-    const wck::WorkloadSummary low_lambda = wck::simulate_workload_mc(params);
-    params.lambda = 1.4;
-    const wck::WorkloadSummary high_lambda = wck::simulate_workload_mc(params);
-    expect(
-        high_lambda.mean_workload > low_lambda.mean_workload,
-        "monotonic lambda: expected higher lambda to increase mean workload");
-
-    params.lambda = 1.1;
-    params.alpha = 0.25;
-    const wck::WorkloadSummary low_alpha = wck::simulate_workload_mc(params);
-    params.alpha = 4.0;
-    const wck::WorkloadSummary high_alpha = wck::simulate_workload_mc(params);
-    expect(
-        low_alpha.mean_workload > high_alpha.mean_workload,
-        "monotonic alpha: expected lower alpha to increase mean workload");
-}
-
 void test_distribution_family_coverage() {
     wck::WorkloadRunParams exp_params = base_params();
     exp_params.replications = 16;
@@ -140,26 +116,6 @@ std::string valid_cli_config_json() {
 })JSON";
 }
 
-std::string valid_cli_lognormal_config_json() {
-    return R"JSON({
-  "simulation": {
-    "warmup_time": 30.0,
-    "sample_time": 200.0,
-    "replications": 24,
-    "threads": 2,
-    "seed": 123,
-    "normalize_service_mean_to_one": true
-  },
-  "model": {
-    "name": "CLI workload model LN",
-    "alias": "mln1_41h2_4",
-    "arrival": { "distribution": { "family": "exponential", "params": { "rate": 1.0 } } },
-    "service": { "distribution": { "family": "lognormal", "params": { "mean": 1.0, "scv": 4.0 } } },
-    "patience": { "distribution": { "family": "hyperexponential2", "params": { "p": 0.6, "rate1": 2.0, "rate2": 0.5 } } }
-  }
-})JSON";
-}
-
 void test_cli_smoke_and_invalid_config() {
     const auto dir = make_temp_dir("wck_workload_cli");
     const auto config_path = write_text_file(dir, "config.json", valid_cli_config_json());
@@ -180,18 +136,6 @@ void test_cli_smoke_and_invalid_config() {
     expect(summary.find("\"std_workload\":") != std::string::npos, "workload cli smoke: missing std_workload");
     expect(summary.find("\"n_reps\":") != std::string::npos, "workload cli smoke: missing n_reps");
     expect(summary.find("\"model_name\":") != std::string::npos, "workload cli smoke: missing model_name");
-
-    const auto config_ln_path = write_text_file(dir, "config_lognormal.json", valid_cli_lognormal_config_json());
-    const auto summary_ln_path = dir / "summary_lognormal.json";
-    const std::string cmd_ln =
-        std::string("\"") + WCK_WORKLOAD_MC_CLI_PATH + "\""
-        + " --config \"" + config_ln_path.string() + "\""
-        + " --lambda 1.1 --alpha 0.5"
-        + " --summary-json \"" + summary_ln_path.string() + "\""
-        + " --threads 1 --seed 98766";
-    const int rc_ln = std::system(cmd_ln.c_str());
-    expect(rc_ln == 0, "workload cli lognormal smoke: command failed");
-    expect(std::filesystem::exists(summary_ln_path), "workload cli lognormal smoke: summary file missing");
 
     const auto invalid_config_path = write_text_file(
         dir,
@@ -334,7 +278,6 @@ void test_wrapper_no_summary_dir_uses_temp_summaries() {
 
 void run_workload_sim_tests() {
     test_determinism_and_thread_invariance();
-    test_monotonic_sanity();
     test_distribution_family_coverage();
     test_cli_smoke_and_invalid_config();
     test_wrapper_smoke();

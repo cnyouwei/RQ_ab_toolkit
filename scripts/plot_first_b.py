@@ -47,7 +47,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        from rqab.plotting import plot_first_b_tripanel
+        from rqab.plotting.first_calibration import plot_first_b_tripanel
     except ModuleNotFoundError as exc:
         print(f"error: plotting dependencies unavailable ({exc})", file=sys.stderr)
         return 1

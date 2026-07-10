@@ -4,7 +4,6 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import subprocess
-import sys
 import time
 from typing import Any
 
@@ -96,7 +95,3 @@ def render_progress(
         f"ETA {format_eta(eta)}"
     )
     print(msg, end="", flush=True)
-
-
-def eprint(*args: Any) -> None:
-    print(*args, file=sys.stderr)

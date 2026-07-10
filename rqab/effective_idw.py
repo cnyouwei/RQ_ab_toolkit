@@ -1,12 +1,4 @@
-#!/usr/bin/env python3
-"""
-Utilities for hyperexponential (H2) IDC and effective-IDW approximations.
-
-Implements formulas used in RQ_ab.tex:
-- IDC of equilibrium H2 renewal process
-- Refined IDW surrogate and effective-IDW approximation
-- Scaling parameters (tau, tilde c) from Lemma var_expression
-"""
+"""Renewal IDC formulas and the effective-IDW approximation."""
 
 from __future__ import annotations
 
@@ -104,31 +96,6 @@ def h2_params_from_rate_scv_r(rate: float, scv: float, r: float = 0.5) -> H2Para
     )
 
 
-def exponential_moments(rate: float) -> tuple[float, float]:
-    """Return (mean, scv) for Exp(rate)."""
-    if rate <= 0.0:
-        raise ValueError("rate must be > 0")
-    return (1.0 / rate, 1.0)
-
-
-def erlang_k_moments(k: int, rate: float) -> tuple[float, float]:
-    """Return (mean, scv) for Erlang(k, rate)."""
-    if k < 1:
-        raise ValueError("k must be >= 1")
-    if rate <= 0.0:
-        raise ValueError("rate must be > 0")
-    return (k / rate, 1.0 / k)
-
-
-def lognormal_moments(mean: float, scv: float) -> tuple[float, float]:
-    """Return (mean, scv) for LogNormal parameterized by mean and SCV."""
-    if not (math.isfinite(mean) and mean > 0.0):
-        raise ValueError("mean must be finite and > 0")
-    if not (math.isfinite(scv) and scv > 0.0):
-        raise ValueError("scv must be finite and > 0")
-    return (mean, scv)
-
-
 def hyperexponential2_moments(p: float, rate1: float, rate2: float) -> tuple[float, float]:
     """Return (mean, scv) for two-phase hyperexponential."""
     if not (0.0 < p < 1.0):
@@ -162,11 +129,26 @@ def distribution_moments(family: str, params: dict[str, float | int]) -> tuple[f
     """
     f = family.strip().lower()
     if f in ("exponential", "exp"):
-        return exponential_moments(rate=float(params["rate"]))
+        rate = float(params["rate"])
+        if rate <= 0.0:
+            raise ValueError("rate must be > 0")
+        return (1.0 / rate, 1.0)
     if f in ("erlang_k", "erlang"):
-        return erlang_k_moments(k=int(params["k"]), rate=float(params["rate"]))
+        k = int(params["k"])
+        rate = float(params["rate"])
+        if k < 1:
+            raise ValueError("k must be >= 1")
+        if rate <= 0.0:
+            raise ValueError("rate must be > 0")
+        return (k / rate, 1.0 / k)
     if f in ("lognormal", "ln"):
-        return lognormal_moments(mean=float(params["mean"]), scv=float(params["scv"]))
+        mean = float(params["mean"])
+        scv = float(params["scv"])
+        if not (math.isfinite(mean) and mean > 0.0):
+            raise ValueError("mean must be finite and > 0")
+        if not (math.isfinite(scv) and scv > 0.0):
+            raise ValueError("scv must be finite and > 0")
+        return (mean, scv)
     if f in ("hyperexponential2", "h2"):
         return hyperexponential2_moments(
             p=float(params["p"]),
@@ -319,16 +301,11 @@ def idc_erlang_equilibrium(
 
 
 def hat_idw_refined(
-    t: Sequence[float] | float,
     ia_t: Sequence[float] | float,
     rho: float,
     c_s2: float,
 ) -> list[float] | float:
-    """
-    Refined surrogate IDW:
-      hat_Iw(t) = I_a(t)/(rho vee 1) + (1 - 1/(rho vee 1)) + c_s^2
-    """
-    _ = t  # Kept for API consistency with paper notation.
+    """Return the refined surrogate arrival-plus-service IDW."""
     rho_eff = max(float(rho), 1.0)
     base = 1.0 - 1.0 / rho_eff + float(c_s2)
     ia_values, as_list = _as_float_list(ia_t)
@@ -344,9 +321,7 @@ def tau_tilde_c(
     c_s2: float,
     beta_patience: float,
 ) -> tuple[float, float]:
-    """
-    Compute (tau, tilde_c) from Lemma var_expression in RQ_ab.tex.
-    """
+    """Return the effective-IDW time and drift scaling parameters."""
     if k < 1:
         raise ValueError("k must be >= 1")
     if mu <= 0.0:
@@ -366,17 +341,13 @@ def tau_tilde_c(
 
 
 def effective_idw_approx(
-    t: Sequence[float] | float,
     ia_t: Sequence[float] | float,
     rho: float,
     c_s2: float,
     w_values: Sequence[float] | float,
 ) -> list[float] | float:
-    """
-    Effective-IDW approximation:
-      hat_Iw_ab(t) ~= hat_Iw(t) * w_{tilde c,k}(...)
-    """
-    hat = hat_idw_refined(t=t, ia_t=ia_t, rho=rho, c_s2=c_s2)
+    """Multiply the refined IDW surrogate by calibrated variance weights."""
+    hat = hat_idw_refined(ia_t=ia_t, rho=rho, c_s2=c_s2)
     hat_list, hat_is_list = _as_float_list(hat)
     w_list, w_is_list = _as_float_list(w_values)
 
