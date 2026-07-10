@@ -1,7 +1,7 @@
 {
   "simulation": {
     "warmup_time": 1000000.0,
-    "sample_time": 10000000.0,
+    "sample_time": 20000000.0,
     "replications": 250,
     "threads": 0,
     "seed": 123456789,

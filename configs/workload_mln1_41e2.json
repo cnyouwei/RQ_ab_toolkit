@@ -1,8 +1,8 @@
 {
   "simulation": {
-    "warmup_time": 100000.0,
-    "sample_time": 1000000.0,
-    "replications": 100,
+    "warmup_time": 1000000.0,
+    "sample_time": 20000000.0,
+    "replications": 250,
     "threads": 0,
     "seed": 123456789,
     "normalize_service_mean_to_one": true

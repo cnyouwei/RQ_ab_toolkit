@@ -29,6 +29,7 @@ from rqab.fixed_point import BisectOptions, survival_alpha
 from rqab.grids import build_s_grid
 from rqab.idc import departure_idc_curve
 from rqab.models import (
+    BaseSystemStats,
     DistributionComponent,
     build_base_stats,
     infer_k_from_patience,
@@ -305,6 +306,171 @@ class TestRefinedSolverInternals(unittest.TestCase):
             refined_mod.canonical_b_table_c(1.0, 0)
 
 
+class TestFirstCalibration(unittest.TestCase):
+    def test_solver_standardizes_load_and_reports_physical_mean(self) -> None:
+        model = load_model_config(CONFIGS_DIR / "workload_mln1_41h2_4.json")
+        base = build_base_stats(model, k=infer_k_from_patience(model.patience))
+        solver = first_mod.FirstSolver(
+            model=model,
+            base=base,
+            u_grid=build_s_grid(1e-3, 1e3, 60),
+        )
+        row = {
+            "tuple_id": 1,
+            "lambda": 1.2,
+            "alpha": 0.5,
+            "lambda_k": 0,
+            "lambda_form": "custom",
+            "alpha_k": 0,
+        }
+
+        solved = solver.solve_one_tuple(row)
+
+        c = (float(row["lambda"]) / base.mu - 1.0) / (
+            float(row["alpha"]) ** base.h
+        )
+        ratio = (base.c_a2 + base.c_s2) / (2.0 * base.mu)
+        expected_q = (
+            c
+            * ratio ** (-base.k / float(base.k + 1))
+            * base.beta_patience ** (-1.0 / float(base.k + 1))
+        )
+
+        # k=1 is a lower-truncated N(q, 1): m=q+phi(q)/Phi(q).
+        phi = math.exp(-0.5 * expected_q * expected_q) / math.sqrt(2.0 * math.pi)
+        cdf = 0.5 * math.erfc(-expected_q / math.sqrt(2.0))
+        gap = phi / cdf
+        normalized_mean = expected_q + gap
+        expected_b = math.sqrt(2.0 * normalized_mean * gap)
+        expected_psi = (
+            ratio / base.beta_patience
+        ) ** (1.0 / float(base.k + 1)) * normalized_mean
+
+        self.assertAlmostEqual(float(solved["c"]), c, places=14)
+        self.assertAlmostEqual(float(solved["tilde_c"]), expected_q, places=14)
+        self.assertNotAlmostEqual(
+            float(solved["tilde_c"]),
+            c * base.beta_patience ** (-1.0 / float(base.k + 1)),
+            places=6,
+        )
+        self.assertAlmostEqual(float(solved["b"]), expected_b, places=13)
+        self.assertAlmostEqual(float(solved["psi"]), expected_psi, places=13)
+        self.assertEqual(solved["calibration_status"], first_mod.CALIBRATION_EXACT)
+
+        # The physical mean and calibrated b satisfy the target-model identity.
+        lhs = -c * expected_psi + base.beta_patience * expected_psi ** (base.k + 1)
+        rhs = ratio * expected_b * expected_b / 2.0
+        self.assertAlmostEqual(lhs, rhs, places=12)
+
+    def test_b_is_invariant_for_primitives_with_the_same_standardized_load(self) -> None:
+        model = load_model_config(CONFIGS_DIR / "workload_mm1e2.json")
+        k = 2
+        h = 2.0 / 3.0
+        beta = 2.0
+        target_q = 0.5
+        bases = [
+            BaseSystemStats(
+                mu=1.0,
+                c_a2=1.0,
+                c_s2=1.0,
+                k=k,
+                h=h,
+                beta_patience=beta,
+            ),
+            BaseSystemStats(
+                mu=2.0,
+                c_a2=4.0,
+                c_s2=6.0,
+                k=k,
+                h=h,
+                beta_patience=beta,
+            ),
+        ]
+
+        solved_rows = []
+        for index, base in enumerate(bases, start=1):
+            ratio = (base.c_a2 + base.c_s2) / (2.0 * base.mu)
+            c = (
+                target_q
+                * ratio ** (k / float(k + 1))
+                * beta ** (1.0 / float(k + 1))
+            )
+            solver = first_mod.FirstSolver(
+                model=model,
+                base=base,
+                u_grid=[0.0, 0.1, 1.0, 10.0],
+            )
+            solved = solver.solve_one_tuple(
+                {
+                    "tuple_id": index,
+                    "lambda": base.mu * (1.0 + c),
+                    "alpha": 1.0,
+                    "lambda_k": 0,
+                    "lambda_form": "custom",
+                    "alpha_k": 0,
+                }
+            )
+            self.assertAlmostEqual(float(solved["tilde_c"]), target_q, places=13)
+            self.assertEqual(solved["calibration_status"], first_mod.CALIBRATION_EXACT)
+
+            psi = float(solved["psi"])
+            b = float(solved["b"])
+            lhs = -c * psi + beta * psi ** (k + 1)
+            rhs = ratio * b * b / 2.0
+            self.assertAlmostEqual(lhs, rhs, places=11)
+            solved_rows.append(solved)
+
+        self.assertAlmostEqual(
+            float(solved_rows[0]["b"]), float(solved_rows[1]["b"]), places=13
+        )
+        ratio0 = (bases[0].c_a2 + bases[0].c_s2) / (2.0 * bases[0].mu)
+        ratio1 = (bases[1].c_a2 + bases[1].c_s2) / (2.0 * bases[1].mu)
+        expected_psi_ratio = (ratio1 / ratio0) ** (1.0 / float(k + 1))
+        self.assertAlmostEqual(
+            float(solved_rows[1]["psi"]) / float(solved_rows[0]["psi"]),
+            expected_psi_ratio,
+            places=13,
+        )
+
+    def test_k2_infeasible_match_uses_fluid_fallback_without_absolute_value(self) -> None:
+        calibration = first_mod.calibrate_b_first_rq_standardized(tilde_c=2.0, k=2)
+
+        self.assertAlmostEqual(calibration.standardized_mean, 1.3319742592597457, places=10)
+        gap = calibration.standardized_mean**2 - 2.0
+        self.assertLess(gap, 0.0)
+        legacy_abs_b = math.sqrt(2.0 * calibration.standardized_mean * abs(gap))
+        self.assertGreater(legacy_abs_b, 0.7)
+        self.assertEqual(calibration.b, 0.0)
+        self.assertEqual(
+            calibration.status, first_mod.CALIBRATION_FLUID_FALLBACK
+        )
+
+        feasible = first_mod.calibrate_b_first_rq_standardized(tilde_c=1.0, k=2)
+        self.assertAlmostEqual(feasible.b, 0.19011565172687353, places=10)
+        self.assertEqual(feasible.status, first_mod.CALIBRATION_EXACT)
+
+    def test_k1_large_positive_load_avoids_cancellation(self) -> None:
+        q = 10.0
+        calibration = first_mod.calibrate_b_first_rq_standardized(tilde_c=q, k=1)
+        phi = math.exp(-0.5 * q * q) / math.sqrt(2.0 * math.pi)
+        cdf = 0.5 * math.erfc(-q / math.sqrt(2.0))
+        gap = phi / cdf
+        expected_b = math.sqrt(2.0 * (q + gap) * gap)
+
+        self.assertGreater(calibration.b, 0.0)
+        self.assertAlmostEqual(calibration.b, expected_b, delta=expected_b * 1e-12)
+        self.assertEqual(calibration.status, first_mod.CALIBRATION_EXACT)
+
+    def test_k1_deep_underload_tends_to_sqrt_two(self) -> None:
+        calibration = first_mod.calibrate_b_first_rq_standardized(
+            tilde_c=-1000.0, k=1
+        )
+
+        self.assertGreater(calibration.standardized_mean, 0.0)
+        self.assertAlmostEqual(calibration.b, math.sqrt(2.0), delta=1e-6)
+        self.assertEqual(calibration.status, first_mod.CALIBRATION_EXACT)
+
+
 class TestPlotLoaders(unittest.TestCase):
     def test_plot_metadata_accepts_tandem_patience(self) -> None:
         alias, patience_mean, _title = model_plot_metadata(
@@ -452,7 +618,7 @@ class TestGridCLI(unittest.TestCase):
     REFINED_SINGLE_Z = [0.3755364939570427, 0.6497223302721977, 1.1397427096962929]
     REFINED_TANDEM_Z = [0.283348448574543, 0.4733736142516136, 0.8205712214112282]
     FIRST_SINGLE_Z = [0.3879299536347389, 0.6687495037913322, 1.1627303883433342]
-    FIRST_TANDEM_Z = [0.29919707030057907, 0.4956096336245537, 0.8317910209298134]
+    FIRST_TANDEM_Z = [0.29745475202798843, 0.4956096336245537, 0.8420752659440041]
 
     def _rows_sorted(self, out_csv):
         rows, fieldnames = read_csv_rows(out_csv)
@@ -562,6 +728,11 @@ class TestGridCLI(unittest.TestCase):
                 self.assertTrue(str(row["solver_status"]).startswith("ok"))
                 self.assertGreater(float(row["b"]), 0.0)
                 self.assertGreater(float(row["psi"]), 0.0)
+                self.assertEqual(row["calibration_status"], first_mod.CALIBRATION_EXACT)
+                # M/M/1+M has R=beta=1, so q equals the raw c coordinate.
+                self.assertAlmostEqual(
+                    float(row["tilde_c"]), float(row["c"]), places=13
+                )
                 z_values.append(float(row["z_rq_first"]))
 
             self.assertLess(z_values[0], z_values[1])
@@ -590,6 +761,17 @@ class TestGridCLI(unittest.TestCase):
             z_values = []
             for row in rows:
                 self.assertTrue(str(row["solver_status"]).startswith("ok"))
+                self.assertEqual(row["calibration_status"], first_mod.CALIBRATION_EXACT)
+                ratio = (float(row["c_a2"]) + float(row["c_s2"])) / (
+                    2.0 * float(row["mu"])
+                )
+                expected_q = (
+                    float(row["c"])
+                    * ratio ** (-float(row["k"]) / (float(row["k"]) + 1.0))
+                    * float(row["beta_patience"])
+                    ** (-1.0 / (float(row["k"]) + 1.0))
+                )
+                self.assertAlmostEqual(float(row["tilde_c"]), expected_q, places=13)
                 z_values.append(float(row["z_rq_first"]))
 
             self.assertLess(z_values[0], z_values[1])

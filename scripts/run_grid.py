@@ -7,7 +7,7 @@ workload   Monte-Carlo ground truth via the workload_mc binary
            -> results/workload_grid_aggregate_<alias>.csv
 refined    Refined RQ fixed point (RQ_ab.tex eq:RQ_ab_2) + WG/Hazard/HG
            benchmark columns -> results/refined_rq_grid_<alias>.csv
-first      First (crude) RQ fixed point (eq:RQ_ab_1) with closed-form b(c)
+first      First (crude) RQ fixed point (eq:RQ_ab_1) with standardized b_k(q)
            -> results/first_rq_grid_<alias>.csv
 
 Tandem models (configs with model.queue1/queue2) are detected automatically;
@@ -237,12 +237,6 @@ def main() -> int:
         # first
         if args.b_override is not None and not (args.b_override >= 0.0):
             raise ValueError("--b-override must be >= 0")
-        if abs(base.mu - 1.0) > 1e-12:
-            print(
-                f"warning: eq:b calibration assumes mu=1 but derived mu={base.mu}; "
-                "results may be miscalibrated.",
-                file=sys.stderr,
-            )
         solver_first = first_mod.FirstSolver(
             model=model,
             base=base,

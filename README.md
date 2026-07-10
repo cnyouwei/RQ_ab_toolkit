@@ -96,7 +96,7 @@ python3 scripts/run_grid.py --method workload --model-config configs/workload_mm
 # Refined RQ + WG/Hazard/HG columns -> results/refined_rq_grid_<alias>.csv
 python3 scripts/run_grid.py --method refined --model-config configs/workload_mm1m.json
 
-# First (crude) RQ with closed-form b(c) -> results/first_rq_grid_<alias>.csv
+# First (crude) RQ with standardized b_k(q) -> results/first_rq_grid_<alias>.csv
 python3 scripts/run_grid.py --method first --model-config configs/workload_mm1m.json
 ```
 
@@ -142,4 +142,4 @@ python3 -m unittest discover -s tests -p 'test_*.py' # Python
 
 ## Formulas
 
-The implementations map to `Robust Queueing for Single-Server Queues with Abandonment` as follows: first RQ fixed point (eq:RQ_ab_1) and its closed-form `b(c)` calibration (eq:b, eq:HT_exact) in `rqab/first.py`; refined RQ (eq:RQ_ab_2) with the `w_{c,k}` scaling (Lemma var_expression) in `rqab/refined.py` + `rqab/effective_idw.py`; the effective-IDW approximation (eq:V) in `rqab/effective_idw.py`; WG (eq:ROU_expectation), hazard-rate scaling, and HG benchmarks in `rqab/secondary.py`; the tandem departure-IDC blend (eq:IDC_dep_app, eq:wstar_app) in `rqab/idc.py`; the `w_{c,k}(t)` PDE solver and `b(c)` calibration in `src/wck_table/`, `src/rq_calibration/`.
+The implementations map to `Robust Queueing for Single-Server Queues with Abandonment` as follows: first RQ fixed point (eq:RQ_ab_1) and its standardized `b_k(q)` calibration—with an explicit `b=0` fallback when exact matching is infeasible—in `rqab/first.py`; refined RQ (eq:RQ_ab_2) with the `w_{c,k}` scaling (Lemma var_expression) in `rqab/refined.py` + `rqab/effective_idw.py`; the effective-IDW approximation (eq:V) in `rqab/effective_idw.py`; WG (eq:ROU_expectation), hazard-rate scaling, and HG benchmarks in `rqab/secondary.py`; the tandem departure-IDC blend (eq:IDC_dep_app, eq:wstar_app) in `rqab/idc.py`; the `w_{c,k}(t)` PDE solver and `b(c)` calibration in `src/wck_table/`, `src/rq_calibration/`.

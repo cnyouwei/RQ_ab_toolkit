@@ -4,13 +4,14 @@
 
 with I_w(lambda*u) = I_a(u) + c_s^2 the crude IDW (eq:IDW_first_RQ); for
 tandem models I_a is the queue-1 departure IDC.  The robustness parameter b
-is calibrated per tuple by the closed-form rule (eq:b):
+is calibrated per tuple at the standardized load coordinate
 
-    b(c) = sqrt( 2*| -c*psi + beta*psi^(k+1) | ),   c = (rho - 1) / alpha^h,
+    q = c * ((c_a^2 + c_s^2)/(2*mu))^(-k/(k+1)) * beta^(-1/(k+1)),
+    b_k(q)^2 = 2*m_k(q)*(m_k(q)^k - q),
 
-where psi is the exact critically-loaded heavy-traffic constant (eq:HT_exact,
-mu = 1), evaluated by adaptive Simpson quadrature after localizing the
-integrand around its mode.  No w/b tables are required.
+where m_k(q) is the mean of the normalized critical diffusion.  Exact
+matching is used only when the right-hand side is positive; otherwise b=0 is
+the fluid-boundary fallback.  No w/b tables are required.
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ from .fixed_point import (
     solve_fixed_point,
     survival_alpha,
 )
+from .effective_idw import tau_tilde_c
 from .idc import arrival_idc_curve_for
 from .models import AnyModel, BaseSystemStats
 from .util import require_float, require_int, require_str
@@ -39,8 +41,10 @@ CSV_COLUMNS = [
     "alpha_k",
     "z_rq_first",
     "c",
+    "tilde_c",
     "b",
     "psi",
+    "calibration_status",
     "k",
     "h",
     "rho",
@@ -61,6 +65,24 @@ CSV_COLUMNS = [
 PSI_SIMPSON_EPS = 1e-12
 PSI_SIMPSON_MAX_DEPTH = 40
 PSI_LOG_TAIL_CUTOFF = 80.0
+CALIBRATION_FEASIBILITY_REL_TOL = 1e-12
+
+CALIBRATION_EXACT = "exact"
+CALIBRATION_FLUID_FALLBACK = "fluid_fallback"
+CALIBRATION_OVERRIDE = "override"
+
+_LOG_2PI = math.log(2.0 * math.pi)
+_SQRT2 = math.sqrt(2.0)
+_INVERSE_MILLS_CF_TERMS = 200
+
+
+@dataclass(frozen=True)
+class FirstCalibration:
+    """Normalized first-RQ calibration result at one standardized load."""
+
+    b: float
+    standardized_mean: float
+    status: str
 
 
 def adaptive_simpson(
@@ -94,29 +116,42 @@ def adaptive_simpson(
     return recurse(a, b, fa, fb, fc, s, max_depth)
 
 
-def psi_critical(c: float, k: int, beta_patience: float) -> float:
-    """Exact psi from eq:HT_exact with gamma = h and mu = 1.
+def _truncated_normal_mean_and_log_gap(q: float) -> tuple[float, float]:
+    """Return m_1(q) and log(m_1(q) - q) without tail cancellation."""
+    if q < -8.0:
+        # For x=-q, the inverse Mills ratio has the continued fraction
+        #   phi(x)/Phi(-x) = x + 1/(x + 2/(x + 3/(x + ...))).
+        # Evaluate the part after x directly so m_1(-x) is never formed by
+        # subtracting two nearly equal numbers.
+        x = -q
+        tail = 0.0
+        for numerator in range(_INVERSE_MILLS_CF_TERMS, 1, -1):
+            tail = float(numerator) / (x + tail)
+        mean = 1.0 / (x + tail)
+        log_gap = math.log(x + mean)
+        return mean, log_gap
 
-    psi = E[X] for the density proportional to exp(g(x)) on [0, inf) with
-    g(x) = c*x - beta*x^(k+1)/(k+1).  The integration window is localized
-    around the maximizer of g so the computation stays accurate for large |c|.
-    """
-    if k < 1:
-        raise ValueError("k must be >= 1")
-    if not (beta_patience > 0.0 and math.isfinite(beta_patience)):
-        raise ValueError("beta_patience must be finite and > 0")
-    if not math.isfinite(c):
-        raise ValueError("c must be finite")
+    cdf = 0.5 * math.erfc(-q / _SQRT2)
+    if not (cdf > 0.0 and math.isfinite(cdf)):
+        raise RuntimeError("failed to evaluate the truncated-normal normalizer")
+    log_gap = -0.5 * q * q - 0.5 * _LOG_2PI - math.log(cdf)
+    gap = math.exp(log_gap)
+    mean = q + gap
+    if not (mean > 0.0 and math.isfinite(mean)):
+        raise RuntimeError("computed standardized critical mean is invalid")
+    return mean, log_gap
 
-    beta = float(beta_patience)
-    kp1 = float(k + 1)
+
+def _standardized_critical_mean_quadrature(q: float, k: int) -> float:
+    """Compute m_k(q) for k>1 using a moment centered at the density mode."""
+    kp1 = k + 1
 
     def g(x: float) -> float:
-        return c * x - beta * (x**kp1) / kp1
+        return q * x - (x**kp1) / float(kp1)
 
-    # g'(x) = c - beta*x^k: interior mode for c > 0, boundary mode at 0 otherwise.
-    if c > 0.0:
-        x_mode = (c / beta) ** (1.0 / float(k))
+    # g'(x) = q - x^k: interior mode for q > 0, boundary mode otherwise.
+    if q > 0.0:
+        x_mode = q ** (1.0 / float(k))
     else:
         x_mode = 0.0
     g_max = g(x_mode)
@@ -124,15 +159,15 @@ def psi_critical(c: float, k: int, beta_patience: float) -> float:
     def g_shift(x: float) -> float:
         return g(x) - g_max
 
-    # Right endpoint: expand then bisect to where the integrand is negligible.
-    step = max(x_mode, 1.0, beta ** (-1.0 / kp1))
+    # Expand and then bisect to a right endpoint with negligible mass.
+    step = max(x_mode, 1.0)
     hi = x_mode + step
     for _ in range(200):
         if g_shift(hi) < -PSI_LOG_TAIL_CUTOFF:
             break
         hi = x_mode + (hi - x_mode) * 2.0
     else:
-        raise RuntimeError("failed to localize right tail of psi integrand")
+        raise RuntimeError("failed to localize right tail of critical-mean integrand")
     lo_r = x_mode
     hi_r = hi
     for _ in range(200):
@@ -145,7 +180,7 @@ def psi_critical(c: float, k: int, beta_patience: float) -> float:
             break
     x_hi = hi_r
 
-    # Left endpoint: 0 unless the integrand at 0 is already negligible.
+    # Use zero unless the left tail is already negligible before the boundary.
     x_lo = 0.0
     if x_mode > 0.0 and g_shift(0.0) < -PSI_LOG_TAIL_CUTOFF:
         lo_l = 0.0
@@ -161,35 +196,104 @@ def psi_critical(c: float, k: int, beta_patience: float) -> float:
         x_lo = lo_l
 
     if not (x_hi > x_lo):
-        raise RuntimeError("degenerate psi integration window")
+        raise RuntimeError("degenerate critical-mean integration window")
 
     def exp_term(x: float) -> float:
-        e = g_shift(x)
-        if e < -745.0:
+        exponent = g_shift(x)
+        if exponent < -745.0:
             return 0.0
-        return math.exp(e)
+        return math.exp(exponent)
 
     width = x_hi - x_lo
     eps0 = PSI_SIMPSON_EPS * width
-    eps1 = PSI_SIMPSON_EPS * width * max(1.0, x_hi)
+    eps1 = PSI_SIMPSON_EPS * width * width
     i0 = adaptive_simpson(exp_term, x_lo, x_hi, eps0, PSI_SIMPSON_MAX_DEPTH)
-    i1 = adaptive_simpson(lambda x: x * exp_term(x), x_lo, x_hi, eps1, PSI_SIMPSON_MAX_DEPTH)
+    i1 = adaptive_simpson(
+        lambda x: (x - x_mode) * exp_term(x),
+        x_lo,
+        x_hi,
+        eps1,
+        PSI_SIMPSON_MAX_DEPTH,
+    )
     if not (i0 > 0.0 and math.isfinite(i0) and math.isfinite(i1)):
-        raise RuntimeError("failed to compute finite psi integrals")
-    psi = i1 / i0
-    if not (psi >= 0.0 and math.isfinite(psi)):
-        raise RuntimeError("computed psi is invalid")
-    return psi
+        raise RuntimeError("failed to compute finite critical-mean integrals")
+    mean = x_mode + i1 / i0
+    if not (mean >= 0.0 and math.isfinite(mean)):
+        raise RuntimeError("computed standardized critical mean is invalid")
+    return mean
+
+
+def standardized_critical_mean(tilde_c: float, k: int) -> float:
+    """Mean m_k(q) under density exp(q*y - y^(k+1)/(k+1)), y >= 0."""
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    if not math.isfinite(tilde_c):
+        raise ValueError("tilde_c must be finite")
+    q = float(tilde_c)
+    if k == 1:
+        mean, _log_gap = _truncated_normal_mean_and_log_gap(q)
+        return mean
+    return _standardized_critical_mean_quadrature(q=q, k=k)
+
+
+def calibrate_b_first_rq_standardized(tilde_c: float, k: int) -> FirstCalibration:
+    """Calibrate at q=tilde_c, with an explicit infeasible-match fallback."""
+    mean = standardized_critical_mean(tilde_c=tilde_c, k=k)
+    q = float(tilde_c)
+
+    if k == 1:
+        # Every finite q is feasible for k=1.  Work in log scale because the
+        # gap m_1(q)-q is far below machine precision in positive overload.
+        _mean_check, log_gap = _truncated_normal_mean_and_log_gap(q)
+        log_b = 0.5 * (math.log(2.0) + math.log(mean) + log_gap)
+        b = math.exp(log_b)
+        status = CALIBRATION_EXACT
+    else:
+        mean_power = mean**k
+        gap = mean_power - q
+        tolerance = CALIBRATION_FEASIBILITY_REL_TOL * max(
+            1.0, abs(mean_power), abs(q)
+        )
+        if gap > tolerance:
+            b = math.sqrt(2.0 * mean * gap)
+            status = CALIBRATION_EXACT
+        else:
+            b = 0.0
+            status = CALIBRATION_FLUID_FALLBACK
+
+    if not (b >= 0.0 and math.isfinite(b)):
+        raise RuntimeError("calibrated b is invalid")
+    return FirstCalibration(b=b, standardized_mean=mean, status=status)
+
+
+def psi_critical(c: float, k: int, beta_patience: float) -> float:
+    """Canonical (R=1) physical heavy-traffic mean retained for compatibility."""
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    if not (beta_patience > 0.0 and math.isfinite(beta_patience)):
+        raise ValueError("beta_patience must be finite and > 0")
+    if not math.isfinite(c):
+        raise ValueError("c must be finite")
+
+    scale = float(beta_patience) ** (-1.0 / float(k + 1))
+    tilde_c = float(c) * scale
+    return scale * standardized_critical_mean(tilde_c=tilde_c, k=k)
 
 
 def calibrate_b_first_rq(c: float, k: int, beta_patience: float) -> tuple[float, float]:
-    """Closed-form calibration (eq:b): b(c) = sqrt(2*|-c*psi + beta*psi^(k+1)|)."""
-    psi = psi_critical(c=c, k=k, beta_patience=beta_patience)
-    value = -c * psi + beta_patience * (psi ** float(k + 1))
-    b = math.sqrt(2.0 * abs(value))
-    if not (b >= 0.0 and math.isfinite(b)):
-        raise RuntimeError("calibrated b is invalid")
-    return b, psi
+    """Canonical R=1 wrapper returning the historical ``(b, psi)`` pair."""
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    if not (beta_patience > 0.0 and math.isfinite(beta_patience)):
+        raise ValueError("beta_patience must be finite and > 0")
+    if not math.isfinite(c):
+        raise ValueError("c must be finite")
+    scale = float(beta_patience) ** (-1.0 / float(k + 1))
+    calibration = calibrate_b_first_rq_standardized(
+        tilde_c=float(c) * scale,
+        k=k,
+    )
+    return calibration.b, scale * calibration.standardized_mean
 
 
 @dataclass(frozen=True)
@@ -265,11 +369,30 @@ class FirstSolver:
         base = self.base
         rho = lam / base.mu
         c = (rho - 1.0) / (alpha**base.h)
+        _tau, tilde_c = tau_tilde_c(
+            c=c,
+            k=base.k,
+            mu=base.mu,
+            c_a2=base.c_a2,
+            c_s2=base.c_s2,
+            beta_patience=base.beta_patience,
+        )
         if self.b_override is not None:
             b = float(self.b_override)
             psi = float("nan")
+            calibration_status = CALIBRATION_OVERRIDE
         else:
-            b, psi = calibrate_b_first_rq(c=c, k=base.k, beta_patience=base.beta_patience)
+            calibration = calibrate_b_first_rq_standardized(
+                tilde_c=tilde_c,
+                k=base.k,
+            )
+            b = calibration.b
+            c_x2 = base.c_a2 + base.c_s2
+            physical_scale = (
+                c_x2 / (2.0 * base.mu * base.beta_patience)
+            ) ** (1.0 / float(base.k + 1))
+            psi = physical_scale * calibration.standardized_mean
+            calibration_status = calibration.status
 
         kernel = self.build_kernel(lam=lam)
         solution: FixedPointResult = solve_fixed_point(
@@ -286,8 +409,10 @@ class FirstSolver:
             "alpha_k": require_int(row, "alpha_k"),
             "z_rq_first": solution.z,
             "c": c,
+            "tilde_c": tilde_c,
             "b": b,
             "psi": psi,
+            "calibration_status": calibration_status,
             "k": base.k,
             "h": base.h,
             "rho": rho,

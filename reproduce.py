@@ -254,6 +254,21 @@ def check_workload_provenance(csv_path: Path, config_path: Path) -> None:
             return
         row = rows[0]
         mismatches = []
+        timing_columns = ("warmup_time", "sample_time")
+        missing_timing = [column for column in timing_columns if column not in row]
+        if missing_timing:
+            mismatches.append(
+                "legacy aggregate missing simulation provenance columns "
+                + ",".join(missing_timing)
+            )
+        else:
+            for column in timing_columns:
+                recorded = float(row[column])
+                configured = float(sim[column])
+                if recorded != configured:
+                    mismatches.append(
+                        f"{column} {row[column]} != config {column} {sim[column]}"
+                    )
         if int(row["n_reps"]) != int(sim["replications"]):
             mismatches.append(f"n_reps {row['n_reps']} != config replications {sim['replications']}")
         if int(row["seed"]) != int(sim["seed"]):
