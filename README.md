@@ -17,7 +17,8 @@ Code for the numerical experiments and figures of `Robust Queueing for Single-Se
 ## Prerequisites
 
 - CMake >= 3.20, a C++20 compiler
-- Python >= 3.9 with `matplotlib` and `numpy` (avoid matplotlib 3.11.0 for LaTeX-rendered figures: its usetex PDF output drops minus signs; the plotting code detects this and falls back to mathtext with a warning)
+- Python >= 3.9 with `matplotlib` and `numpy` — `pip install -r requirements.txt` (it excludes matplotlib 3.11.0, whose usetex PDF output drops minus signs; the plotting code detects that build and falls back to mathtext with a warning, losing the LaTeX text rendering)
+- A LaTeX installation with `latex` on PATH for LaTeX-rendered figure text (otherwise the plots fall back to mathtext Computer Modern)
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

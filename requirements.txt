@@ -1,0 +1,12 @@
+# Python dependencies for reproduce.py / scripts/ / rqab/.
+#
+# matplotlib 3.11.0 is excluded: its usetex PDF backend drops glyphs at
+# char code 0 (notably the math minus sign) from Type-1 subset fonts, so
+# every negative number in a LaTeX-rendered figure comes out blank.  The
+# plotting code detects the bug and falls back to mathtext, but the paper
+# figures are meant to be rendered with usetex (Computer Modern via a
+# local LaTeX installation).
+numpy
+matplotlib!=3.11.0
+# Optional: provides cmake/ctest inside the venv if no system cmake exists.
+# cmake

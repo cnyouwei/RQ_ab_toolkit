@@ -35,6 +35,7 @@ from helpers import (
 
 from rqab import first as first_mod
 from rqab import refined as refined_mod
+from rqab.effective_idw import tau_tilde_c
 from rqab.fixed_point import BisectOptions, survival_alpha
 from rqab.grids import build_s_grid
 from rqab.idc import departure_idc_curve
@@ -249,6 +250,38 @@ class TestRefinedSolverInternals(unittest.TestCase):
         z_high_alpha = z_of(1.1, 2.0)
         self.assertGreaterEqual(z_low_alpha, z_high_alpha)
 
+    def test_b_table_index_canonical_identity(self) -> None:
+        # For the canonical M/M/1+E_k reference primitives
+        # ((c_a2 + c_s2)/(2 mu) = 1, beta_patience = k^k/k!) the b-table
+        # coordinate is the model's raw c itself.
+        for k in (1, 2, 3):
+            beta_ref = float(k**k) / float(math.factorial(k))
+            for c in (-5.0, -0.125, 0.0, 0.7, 12.0):
+                _tau, tilde_c = tau_tilde_c(
+                    c=c, k=k, mu=1.0, c_a2=1.0, c_s2=1.0, beta_patience=beta_ref
+                )
+                self.assertAlmostEqual(refined_mod.b_table_index(tilde_c, k), c, places=12)
+
+    def test_b_table_index_matches_primitive_form(self) -> None:
+        # c_ref = c * ((c_a2+c_s2)/(2mu))^(-k/(k+1)) * (beta_ref/beta_model)^(1/(k+1)),
+        # i.e. the composition with tau_tilde_c reproduces the target-model
+        # primitive form of the conversion.
+        k, mu, c_a2, c_s2, beta_model = 2, 1.3, 1.7, 0.4, 2.9
+        beta_ref = float(k**k) / float(math.factorial(k))
+        ratio = (c_a2 + c_s2) / (2.0 * mu)
+        for c in (-3.0, -0.2, 1.1, 8.0):
+            _tau, tilde_c = tau_tilde_c(
+                c=c, k=k, mu=mu, c_a2=c_a2, c_s2=c_s2, beta_patience=beta_model
+            )
+            expected = (
+                c * ratio ** (-k / (k + 1.0)) * (beta_ref / beta_model) ** (1.0 / (k + 1.0))
+            )
+            self.assertAlmostEqual(refined_mod.b_table_index(tilde_c, k), expected, places=12)
+
+    def test_b_table_index_rejects_bad_k(self) -> None:
+        with self.assertRaises(ValueError):
+            refined_mod.b_table_index(1.0, 0)
+
 
 class TestPlotLoaders(unittest.TestCase):
     def test_plot_metadata_accepts_tandem_patience(self) -> None:
@@ -325,7 +358,7 @@ class TestPlotLoaders(unittest.TestCase):
                     self._combined_csv_rows(label),
                 )
                 rows, method_title = load_combined_secondary_rows(combined_csv)
-                self.assertEqual(method_title, "GW")
+                self.assertEqual(method_title, "WG")
                 self.assertEqual(len(rows), 3)
                 # Rows are keyed by tuple_id.
                 self.assertEqual(rows[2]["secondary_method"], label)
@@ -397,7 +430,7 @@ class TestGridCLI(unittest.TestCase):
     """
 
     REFINED_SINGLE_Z = [0.3755364939570427, 0.6497223302721977, 1.1397427096962929]
-    REFINED_TANDEM_Z = [0.28347352892160416, 0.4733736142516136, 0.820873461663723]
+    REFINED_TANDEM_Z = [0.283348448574543, 0.4733736142516136, 0.8205712214112282]
     FIRST_SINGLE_Z = [0.3879299536347389, 0.6687495037913322, 1.1627303883433342]
     FIRST_TANDEM_Z = [0.29919707030057907, 0.4956096336245537, 0.8317910209298134]
 

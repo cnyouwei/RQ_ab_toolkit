@@ -2,7 +2,7 @@
 
 Consolidates the old scripts plot_refined_rq_ratio.py (1 panel),
 plot_approx_ratio_twopanel.py (First RQ | Refined RQ) and
-plot_approx_ratio_tripanel.py (RQ | GW-or-Hazard | HG).
+plot_approx_ratio_tripanel.py (RQ | WG-or-Hazard | HG).
 
 Pure plotting: these functions load existing CSVs and draw figures.  They
 never run upstream simulation/grid stages; missing inputs raise
@@ -85,13 +85,14 @@ def load_z_rows(
 
 
 def load_combined_secondary_rows(path: Path) -> tuple[dict[int, dict[str, Any]], str]:
-    """Load the secondary-method (GW/WG or Hazard) and HG columns.
+    """Load the secondary-method (WG or Hazard) and HG columns.
 
     Reads the combined refined/other aggregate CSV and returns
     ``(rows, method_title)`` where each row is
     ``{"secondary_method", "z_secondary", "z_hg"}`` keyed by tuple_id.
-    Values whose status column does not start with "ok" become NaN.  The
-    method title accepts both "wg" and "gw" labels for the GW method.
+    Values whose status column does not start with "ok" become NaN.  Both
+    "wg" and the legacy tandem "gw" CSV labels are accepted for the
+    Ward--Glynn method; the displayed title is always "WG".
     """
     if not path.exists():
         raise FileNotFoundError(f"combined aggregate CSV not found: {path}")
@@ -136,17 +137,17 @@ def load_combined_secondary_rows(path: Path) -> tuple[dict[int, dict[str, Any]],
     if not other_rows:
         raise ValueError("combined CSV has no data rows")
 
-    method_title = "GW/Hazard"
+    method_title = "WG/Hazard"
     if len(secondary_set) == 1:
         only = next(iter(secondary_set))
         if only in ("wg", "gw"):
-            method_title = "GW"
+            method_title = "WG"
         elif only == "hazard":
             method_title = "Hazard rate"
     elif "hazard" in secondary_set and ("wg" not in secondary_set and "gw" not in secondary_set):
         method_title = "Hazard rate"
     elif ("wg" in secondary_set or "gw" in secondary_set) and "hazard" not in secondary_set:
-        method_title = "GW"
+        method_title = "WG"
     return other_rows, method_title
 
 
@@ -645,7 +646,7 @@ def figure_tripanel(
     vmax: float | None = None,
     no_show: bool = True,
 ) -> Path:
-    """Three-panel (RQ | GW-or-Hazard | HG) ratio heatmap.
+    """Three-panel (RQ | WG-or-Hazard | HG) ratio heatmap.
 
     The secondary/HG columns come from the combined refined CSV.
     Canonical output name: results/approx_ratio_tripanel_<alias>.pdf

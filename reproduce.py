@@ -101,7 +101,6 @@ ALL_MODELS = [
     "e2ln1_21h2_4",
     "h2_4ln1_21e2",
     "h2_4ln1_21h2_4",
-    "h2_16m1e2",
     "tandem_h2_4e2_to_m1h2_4",
     "tandem_e2h2_4_to_m1e2",
 ]

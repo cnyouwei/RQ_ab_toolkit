@@ -309,6 +309,7 @@ def normalize_model_title(raw_name: str) -> str:
         title = re.sub(r"(?<![A-Za-z0-9$])E2(?![A-Za-z0-9])", r"$E_2$", title)
         title = re.sub(r"(?<![A-Za-z0-9$])H_2\((\d+)\)", r"$H_2(\1)$", title)
         title = re.sub(r"(?<![A-Za-z0-9$])H2\((\d+)\)", r"$H_2(\1)$", title)
+        title = re.sub(r"(?<![A-Za-z0-9$])LN\((\d+),\s*(\d+)\)", r"$LN(\1,\2)$", title)
         title = re.sub(r"\s+", " ", title).strip()
         return title
 

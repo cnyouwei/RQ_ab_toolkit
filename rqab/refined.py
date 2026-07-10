@@ -84,6 +84,36 @@ _SECONDARY_BLANKS = {
 }
 
 
+def b_table_index(tilde_c: float, k: int) -> float:
+    """Map a model's standardized load index to the b-table's c axis.
+
+    The k-specific b table (b_table_k{k}.csv) is indexed by the raw
+    critical-load coefficient c_ref of the canonical M/M/1+E_k reference
+    model, not by the target model's raw c: the calibration
+    (src/rq_calibration/b_calibration.cpp) stores row.c = c_ref while
+    matching b against the w table at the standardized index
+    tilde_c_ref = c_ref * beta_ref**(-1/(k+1)), beta_ref = k^k/k!.
+    The calibration transfers between models through that standardized
+    index (RQ_ab.tex, Lemma var_expression), so b must be looked up at
+    the c_ref whose standardized index equals the model's tilde_c:
+
+        c_ref = tilde_c * beta_ref**(1/(k+1))
+
+    or, in target-model primitives,
+
+        c_ref = c * ((c_a^2+c_s^2)/(2 mu))**(-k/(k+1))
+                  * (beta_ref/beta_patience)**(1/(k+1)).
+
+    For the canonical reference primitives ((c_a^2+c_s^2)/(2 mu) = 1 and
+    beta_patience = beta_ref) this reduces to c_ref = c, so the lookup is
+    unchanged on M/M/1+M (k=1) and the mean-one M/M/1+E_k references.
+    """
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    beta_ref = float(k**k) / float(math.factorial(k))
+    return float(tilde_c) * beta_ref ** (1.0 / float(k + 1))
+
+
 @dataclass(frozen=True)
 class RefinedKernel:
     c: float
@@ -132,7 +162,11 @@ class RefinedSolver:
             c_s2=base.c_s2,
             beta_patience=base.beta_patience,
         )
-        b = self.b_table.evaluate(c)
+
+        # The b table's c axis is the canonical reference model's raw
+        # coefficient c_ref, not this model's c: convert through the
+        # standardized load index (see b_table_index).
+        b = self.b_table.evaluate(b_table_index(tilde_c, base.k))
 
         ia = arrival_idc_curve_for(self.model, s_values=self.s_grid, lam=lam)
         if len(ia) != len(self.s_grid):
