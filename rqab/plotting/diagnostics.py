@@ -133,12 +133,10 @@ def plot_w_tripanel(
     from matplotlib.ticker import LogLocator, NullFormatter
 
     norm = colors.Normalize(vmin=c_lo, vmax=c_hi)
-    # Nearly the full viridis range for hue diversity; the last few percent
-    # are dropped because the palest yellow washes out on white.
     cmap = colors.ListedColormap([cm.viridis(0.95 * i / 255.0) for i in range(256)])
 
     n_panels = len(ks)
-    fig_width = 12.0
+    fig_width = 9.0
     fig, axes = plt.subplots(
         1,
         n_panels,
@@ -150,7 +148,8 @@ def plot_w_tripanel(
     axes_list = list(axes.flat) if n_panels > 1 else [axes]
 
     for ax, k, interp in zip(axes_list, ks, interps):
-        t_plot = make_log_grid(interp.t_min_pos, interp.t_max, plot_points)
+        plot_t_max = min(1.0e4, interp.t_max)
+        t_plot = make_log_grid(interp.t_min_pos, plot_t_max, plot_points)
         for c in c_values:
             ax.plot(
                 t_plot,
@@ -161,27 +160,27 @@ def plot_w_tripanel(
                 solid_capstyle="round",
             )
         ax.set_xscale("log")
-        ax.set_xlim(interp.t_min_pos, interp.t_max)
+        ax.set_xlim(interp.t_min_pos, plot_t_max)
         # Labeled majors every two decades, quiet minors at every decade.
         ax.xaxis.set_major_locator(LogLocator(base=100.0))
         ax.xaxis.set_minor_locator(LogLocator(base=10.0))
         ax.xaxis.set_minor_formatter(NullFormatter())
-        ax.set_title(rf"$k = {k}$", fontsize=13)
-        ax.set_xlabel(r"$t$", fontsize=12)
+        ax.set_title(rf"$k = {k}$", fontsize=14)
+        ax.set_xlabel(r"$t$", fontsize=13)
         ax.grid(True, which="major", alpha=0.3, linewidth=0.6)
         ax.grid(True, which="minor", alpha=0.12, linewidth=0.4)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
-        ax.tick_params(labelsize=10)
+        ax.tick_params(labelsize=11)
 
-    axes_list[0].set_ylabel(r"$w_{c,k}(t)$", fontsize=12)
+    axes_list[0].set_ylabel(r"$w_{c,k}(t)$", fontsize=13)
     axes_list[0].set_ylim(-0.03, 1.03)
 
     sm = cm.ScalarMappable(norm=norm, cmap=cmap)
     sm.set_array([])
     cbar = fig.colorbar(sm, ax=axes_list, pad=0.015, aspect=28)
-    cbar.ax.set_title(r"$c$", fontsize=12, pad=8)
-    cbar.ax.tick_params(labelsize=10)
+    cbar.ax.set_title(r"$c$", fontsize=13, pad=8)
+    cbar.ax.tick_params(labelsize=11)
     cbar.outline.set_visible(False)
 
     if save_path is not None:
