@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Compatibility CLI for the refined-RQ b(c) calibration tripanel.
+"""Plot the standardized first-RQ calibrated b curves for k = 1, 2, 3.
 
-Uses the shared three-panel style; prefer scripts/plot_refined_b.py for the
-descriptive output name.
-->  results/refined_rq_b_tripanel.pdf
+One panel per k, with exact-match and fluid-fallback regions distinguished
+-> results/first_rq_b_tripanel.pdf
 """
 from __future__ import annotations
 
@@ -26,31 +25,40 @@ def main() -> int:
         help="k values, one panel each (default: 1 2 3).",
     )
     parser.add_argument(
-        "--table",
-        type=Path,
-        nargs="+",
-        default=None,
-        help="b-table CSV overrides, one per k (default: results/b_table_k<k>.csv).",
+        "--q-min",
+        type=float,
+        default=-8.0,
+        help="Smallest standardized load coordinate (default: -8).",
+    )
+    parser.add_argument(
+        "--q-max",
+        type=float,
+        default=4.0,
+        help="Largest standardized load coordinate (default: 4).",
+    )
+    parser.add_argument(
+        "--points",
+        type=int,
+        default=601,
+        help="Number of q samples per curve (default: 601).",
     )
     parser.add_argument("--save", type=Path, default=None)
     parser.add_argument("--no-show", action="store_true")
     args = parser.parse_args()
 
-    if args.table is not None and len(args.table) != len(args.k):
-        print("error: --table needs one path per --k value", file=sys.stderr)
-        return 2
-
     try:
-        from rqab.plotting import diagnostics
+        from rqab.plotting import plot_first_b_tripanel
     except ModuleNotFoundError as exc:
         print(f"error: plotting dependencies unavailable ({exc})", file=sys.stderr)
         return 1
 
     try:
         cwd = Path.cwd()
-        diagnostics.plot_b_overlay(
+        plot_first_b_tripanel(
             ks=args.k,
-            table_paths=[resolve(p, cwd) for p in args.table] if args.table is not None else None,
+            q_min=args.q_min,
+            q_max=args.q_max,
+            points=args.points,
             save_path=resolve(args.save, cwd) if args.save is not None else None,
             no_show=args.no_show,
         )

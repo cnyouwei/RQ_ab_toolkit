@@ -19,6 +19,7 @@ from ..tables import (
     make_log_grid,
 )
 from ..util import RESULTS_DIR
+from .calibration_tripanel import CalibrationPlotCurve, render_calibration_tripanel
 
 
 def plot_w_overlay(
@@ -303,71 +304,115 @@ def plot_b_overlay(
     save_path: Path | None = None,
     no_show: bool = True,
 ) -> Path:
-    """Overlay the calibrated b(c) curves for several k in one figure.
+    """Compatibility entry point for the refined-RQ calibration tripanel.
 
-    LaTeX-rendered labels (via style.setup_rcparams); one line style per k
-    with a sqrt(2) reference line.  Output default: results/b_overlay.pdf
+    The historical API name said "overlay".  It now uses the shared tripanel
+    style and the canonical refined-RQ tripanel output name.
     """
-    if len(ks) == 0:
+    return plot_refined_b_tripanel(
+        ks=ks,
+        table_paths=table_paths,
+        save_path=save_path,
+        no_show=no_show,
+    )
+
+
+def _read_refined_b_curve(csv_path: Path) -> CalibrationPlotCurve:
+    """Load a refined-RQ b table and identify its true fallback rows.
+
+    Current calibration tables retain ``status=exact`` for the explicit
+    infeasible-match fallback, so the branch is identified by the same
+    ``a_psi >= -1e-12`` predicate as the calibrator.  Capped k=1 rows remain
+    on the calibrated branch.  Legacy ``best_fit`` rows are also treated as
+    fallback rows; tables without ``a_psi`` retain their status-only behavior.
+    """
+    if not csv_path.exists():
+        raise FileNotFoundError(f"calibration table not found: {csv_path}")
+
+    rows: list[tuple[float, float, bool]] = []
+    with csv_path.open("r", newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            raise ValueError("CSV is empty or missing header")
+        required = {"c", "b", "status"}
+        if not required.issubset(set(reader.fieldnames)):
+            raise ValueError("CSV must contain columns: c,b,status")
+        has_a_psi = "a_psi" in reader.fieldnames
+
+        for row in reader:
+            status = str(row["status"]).strip().lower()
+            if status not in {"exact", "best_fit"}:
+                raise ValueError(f"unknown calibration status: {status}")
+            a_psi = float(row["a_psi"]) if has_a_psi else float("nan")
+            fallback = status == "best_fit" or (
+                math.isfinite(a_psi) and a_psi >= -1e-12
+            )
+            rows.append((float(row["c"]), float(row["b"]), fallback))
+
+    if not rows:
+        raise ValueError("CSV has no data rows")
+    rows.sort(key=lambda row: row[0])
+    return CalibrationPlotCurve(
+        x=tuple(row[0] for row in rows),
+        b=tuple(row[1] for row in rows),
+        fallback=tuple(row[2] for row in rows),
+    )
+
+
+def plot_refined_b_tripanel(
+    ks: Sequence[int] = (1, 2, 3),
+    table_paths: Sequence[Path | None] | None = None,
+    c_min: float | None = -8.0,
+    c_max: float | None = 4.0,
+    save_path: Path | None = None,
+    no_show: bool = True,
+) -> Path:
+    """Plot the refined-RQ calibrated b(c) curves in matching panels.
+
+    The default displayed range is c in [-8, 4], clamped to the shared table
+    domain.  Calibrated/capped portions are solid; explicit infeasible-match
+    fallbacks are dashed red with a light red background.
+    """
+    if not ks:
         raise ValueError("ks must be nonempty")
     if table_paths is not None and len(table_paths) != len(ks):
         raise ValueError("table_paths must match ks in length")
 
-    curves: list[tuple[list[float], list[float]]] = []
+    curves: list[CalibrationPlotCurve] = []
     for i, k in enumerate(ks):
         if k < 1:
             raise ValueError("k must be >= 1")
         override = table_paths[i] if table_paths is not None else None
         table = Path(override) if override is not None else default_b_table_path(k)
-        c_values, b_values, _ = _read_b_table_with_status(table)
-        points = sorted(zip(c_values, b_values), key=lambda p: p[0])
-        curves.append(([p[0] for p in points], [p[1] for p in points]))
+        curves.append(_read_refined_b_curve(table))
 
-    from .style import setup_rcparams
-
-    setup_rcparams()
-
-    import matplotlib.pyplot as plt
-
-    line_styles = ["-", "--", "-.", (0, (3, 1, 1, 1, 1, 1))]
-    fig, ax = plt.subplots(figsize=(7, 4.5), constrained_layout=True)
-    for i, (k, (c_sorted, b_sorted)) in enumerate(zip(ks, curves)):
-        ax.plot(
-            c_sorted,
-            b_sorted,
-            linestyle=line_styles[i % len(line_styles)],
-            linewidth=1.8,
-            color=f"C{i}",
-            label=rf"$k = {k}$",
-        )
-    ax.axhline(
-        math.sqrt(2.0),
-        color="gray",
-        linestyle=(0, (1, 3)),
-        linewidth=1.2,
-        label=r"$\sqrt{2}$",
-    )
-    ax.set_xlabel(r"$c$", fontsize=12)
-    ax.set_ylabel(r"$b(c)$", fontsize=12)
-    ax.set_title(r"Calibrated $b(c)$", fontsize=13)
-    ax.grid(True, alpha=0.3, linewidth=0.6)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(labelsize=10)
-    ax.legend(fontsize=11, frameon=False)
+    table_min = max(curve.x[0] for curve in curves)
+    table_max = min(curve.x[-1] for curve in curves)
+    plot_min = table_min if c_min is None else max(float(c_min), table_min)
+    plot_max = table_max if c_max is None else min(float(c_max), table_max)
+    if not (math.isfinite(plot_min) and math.isfinite(plot_max) and plot_max > plot_min):
+        raise ValueError("tables and requested c range have no common interval")
 
     if save_path is not None:
         out = Path(save_path)
     elif tuple(ks) == (1, 2, 3):
-        out = RESULTS_DIR / "b_overlay.pdf"
+        out = RESULTS_DIR / "refined_rq_b_tripanel.pdf"
     else:
-        out = RESULTS_DIR / ("b_overlay_k" + "_".join(str(k) for k in ks) + ".pdf")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out)
-    print(f"Saved plot: {out}")
-    if not no_show:
-        plt.show()
-    return out
+        out = RESULTS_DIR / (
+            "refined_rq_b_tripanel_k" + "_".join(str(k) for k in ks) + ".pdf"
+        )
+    return render_calibration_tripanel(
+        ks=ks,
+        curves=curves,
+        x_min=plot_min,
+        x_max=plot_max,
+        x_label=r"drift $c$",
+        y_label=r"calibrated $b_k(c)$",
+        calibrated_label="calibrated branch",
+        fallback_label="infeasible-match fallback",
+        save_path=out,
+        no_show=no_show,
+    )
 
 
 def plot_w_curves(

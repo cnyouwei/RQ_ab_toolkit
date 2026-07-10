@@ -9,6 +9,8 @@ Targets (aliases in parentheses):
                                 {E2,H2(4)}/LN(1,2)/1+{E2,H2(4)}
   fig:QIS         (qis)         Tripanel + RQ comparison: two tandem systems
   tables                        w_{c,k}(t) matrix tables + b(c) tables, k=1,2,3
+  first-b                       First-RQ calibrated b_k(q), k=1,2,3
+  refined-b                     Refined-RQ calibrated b_k(c), k=1,2,3
   all                           the five paper figure groups (22 PDFs)
   aux                           complete plot set for every model, all IDW
                                 overlays, w-table overlays and b diagnostics
@@ -667,8 +669,56 @@ def add_idw_steps(plan: Plan, ctx: Context, config_name: str) -> str:
     )
 
 
+def add_first_b_step(plan: Plan, ctx: Context) -> str:
+    """Add the lightweight standardized first-RQ b_k(q) tripanel."""
+    out_pdf = ctx.results / "first_rq_b_tripanel.pdf"
+    return plan.add(
+        Step(
+            key="first-rq-b-tripanel",
+            cmd=[
+                PY,
+                str(SCRIPTS / "plot_first_b.py"),
+                "--save",
+                str(out_pdf),
+                "--no-show",
+            ],
+            outputs=[out_pdf],
+        )
+    )
+
+
+def add_refined_b_step(plan: Plan, ctx: Context) -> str:
+    """Add the refined-RQ b_k(c) tripanel and its calibration-table deps."""
+    b_paths: list[Path] = []
+    deps: list[str] = []
+    for k in TABLE_KS:
+        _w_csv, b_csv, table_deps = add_table_steps(plan, ctx, k)
+        b_paths.append(b_csv)
+        deps.extend(table_deps)
+
+    out_pdf = ctx.results / "refined_rq_b_tripanel.pdf"
+    return plan.add(
+        Step(
+            key="refined-rq-b-tripanel",
+            cmd=[
+                PY,
+                str(SCRIPTS / "plot_refined_b.py"),
+                "--k",
+                *(str(k) for k in TABLE_KS),
+                "--table",
+                *(str(path) for path in b_paths),
+                "--save",
+                str(out_pdf),
+                "--no-show",
+            ],
+            outputs=[out_pdf],
+            deps=tuple(deps),
+        )
+    )
+
+
 def add_diagnostics_steps(plan: Plan, ctx: Context) -> list[str]:
-    keys = []
+    keys = [add_first_b_step(plan, ctx), add_refined_b_step(plan, ctx)]
     for k in TABLE_KS:
         w_csv, b_csv, deps = add_table_steps(plan, ctx, k)
         overlay_pdf = ctx.results / f"w_overlay_k{k}.png"
@@ -744,6 +794,14 @@ def expand_target(plan: Plan, ctx: Context, target: str) -> bool:
             add_table_steps(plan, ctx, k)
         return True
 
+    if t in ("first-b", "first-rq-b"):
+        add_first_b_step(plan, ctx)
+        return True
+
+    if t in ("refined-b", "refined-rq-b"):
+        add_refined_b_step(plan, ctx)
+        return True
+
     if t == "all":
         for name in IDW_FIGURE["configs"]:
             add_idw_steps(plan, ctx, name)
@@ -767,6 +825,8 @@ def expand_target(plan: Plan, ctx: Context, target: str) -> bool:
 def print_target_list() -> None:
     print(__doc__.split("Examples:")[0])
     print("Approximate full-run costs on a ~16-core machine (empty results/):")
+    print("  first-b       seconds (analytic calibration + plot)")
+    print("  refined-b     ~minutes per k if calibration tables are missing")
     print("  tables         ~minutes per k (PDE sweep + calibration)")
     print("  fig:MM1_GI     ~20 min MC for mm1m + ~2 min/model analytics + plots")
     print("  other tripanel ~5-10 min MC per model + analytics + plots")
@@ -781,7 +841,11 @@ def main() -> int:
         description="Reproduce the figures of RQ_ab.tex.",
         usage="reproduce.py [options] target [target ...]",
     )
-    parser.add_argument("targets", nargs="*", help="fig:<label>, alias, tables, all, aux")
+    parser.add_argument(
+        "targets",
+        nargs="*",
+        help="fig:<label>, alias, first-b, refined-b, tables, all, aux",
+    )
     parser.add_argument("--list", action="store_true", help="List targets and costs.")
     parser.add_argument("--force", action="store_true", help="Regenerate even if outputs exist.")
     parser.add_argument("--dry-run", action="store_true", help="Print the plan, run nothing.")

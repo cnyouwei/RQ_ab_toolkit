@@ -53,6 +53,50 @@ class TestReproductionPlan(unittest.TestCase):
         self.assertTrue(plot_step.always)
         self.assertNotIn("idw-sim:effective_idw_h2m1m", plan.steps)
 
+    def test_first_b_target_is_a_lightweight_tripanel(self) -> None:
+        plan = reproduce.Plan()
+
+        self.assertTrue(reproduce.expand_target(plan, self.ctx, "first-b"))
+
+        self.assertEqual(set(plan.steps), {"first-rq-b-tripanel"})
+        step = plan.steps["first-rq-b-tripanel"]
+        self.assertEqual(step.outputs, [self.ctx.results / "first_rq_b_tripanel.pdf"])
+        self.assertEqual(step.deps, ())
+        self.assertFalse(step.heavy)
+
+    def test_aux_includes_first_b_tripanel(self) -> None:
+        plan = reproduce.Plan()
+
+        self.assertTrue(reproduce.expand_target(plan, self.ctx, "aux"))
+
+        self.assertIn("first-rq-b-tripanel", plan.steps)
+
+    def test_refined_b_target_depends_on_all_three_tables(self) -> None:
+        plan = reproduce.Plan()
+
+        self.assertTrue(reproduce.expand_target(plan, self.ctx, "refined-b"))
+
+        step = plan.steps["refined-rq-b-tripanel"]
+        self.assertEqual(
+            step.outputs,
+            [self.ctx.results / "refined_rq_b_tripanel.pdf"],
+        )
+        self.assertEqual(
+            step.deps,
+            ("b-table:k1", "b-table:k2", "b-table:k3"),
+        )
+        self.assertFalse(step.heavy)
+        for k in (1, 2, 3):
+            self.assertIn(f"w-table:k{k}", plan.steps)
+            self.assertIn(f"b-table:k{k}", plan.steps)
+
+    def test_aux_includes_refined_b_tripanel(self) -> None:
+        plan = reproduce.Plan()
+
+        self.assertTrue(reproduce.expand_target(plan, self.ctx, "aux"))
+
+        self.assertIn("refined-rq-b-tripanel", plan.steps)
+
 
 class TestWorkloadProvenance(unittest.TestCase):
     def setUp(self) -> None:

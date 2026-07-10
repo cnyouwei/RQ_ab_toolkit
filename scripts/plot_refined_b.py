@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Compatibility CLI for the refined-RQ b(c) calibration tripanel.
+"""Plot refined-RQ calibrated b(c) for k = 1, 2, 3 in matching panels.
 
-Uses the shared three-panel style; prefer scripts/plot_refined_b.py for the
-descriptive output name.
-->  results/refined_rq_b_tripanel.pdf
+Calibrated/capped and infeasible-match fallback branches are distinguished
+-> results/refined_rq_b_tripanel.pdf
 """
 from __future__ import annotations
 
@@ -32,6 +31,12 @@ def main() -> int:
         default=None,
         help="b-table CSV overrides, one per k (default: results/b_table_k<k>.csv).",
     )
+    parser.add_argument(
+        "--c-min", type=float, default=-8.0, help="Left plot limit (default: -8)."
+    )
+    parser.add_argument(
+        "--c-max", type=float, default=4.0, help="Right plot limit (default: 4)."
+    )
     parser.add_argument("--save", type=Path, default=None)
     parser.add_argument("--no-show", action="store_true")
     args = parser.parse_args()
@@ -41,16 +46,22 @@ def main() -> int:
         return 2
 
     try:
-        from rqab.plotting import diagnostics
+        from rqab.plotting import plot_refined_b_tripanel
     except ModuleNotFoundError as exc:
         print(f"error: plotting dependencies unavailable ({exc})", file=sys.stderr)
         return 1
 
     try:
         cwd = Path.cwd()
-        diagnostics.plot_b_overlay(
+        plot_refined_b_tripanel(
             ks=args.k,
-            table_paths=[resolve(p, cwd) for p in args.table] if args.table is not None else None,
+            table_paths=(
+                [resolve(path, cwd) for path in args.table]
+                if args.table is not None
+                else None
+            ),
+            c_min=args.c_min,
+            c_max=args.c_max,
             save_path=resolve(args.save, cwd) if args.save is not None else None,
             no_show=args.no_show,
         )

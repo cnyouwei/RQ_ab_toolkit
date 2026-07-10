@@ -8,7 +8,7 @@ Code for the numerical experiments and figures of `Robust Queueing for Single-Se
 |-----------------|------------|
 | `reproduce.py`  | One command per paper figure (start here) |
 | `rqab/`         | Python package: models, RQ solvers, table interpolators, plotting |
-| `scripts/`      | Thin CLIs: `run_grid.py`, `plot_ratio_panels.py`, `plot_c_heatmap.py`, `plot_idw_effective.py`, `plot_w_tables.py`, `plot_w_tripanel.py`, `plot_b_overlay.py`, `generate_grid.py` |
+| `scripts/`      | Thin CLIs: `run_grid.py`, ratio/IDW plots, first-RQ and table-calibration diagnostics, and grid generation |
 | `src/`, `include/` | C++: `w_{c,k}(t)` PDE solver, `b(c)` calibration, MC simulators |
 | `configs/`      | Model configs (`workload_*.json`, `effective_idw_*.json`) and the 391-tuple grid |
 | `results/`      | All generated tables, CSVs, and figures |
@@ -32,6 +32,8 @@ C++ binaries produced: `wck` (one `w_{c,k}(t)` curve), `wck_sweep` (matrix table
 python3 reproduce.py --list        # targets + cost estimates
 python3 reproduce.py all           # five paper figure groups (22 PDFs)
 python3 reproduce.py fig:MM1_GI    # or by alias: mm1-gi; other figures: var-approx, mgi1-gi, gigi1-gi, qis
+python3 reproduce.py first-b       # standardized first-RQ b_k(q), k = 1,2,3
+python3 reproduce.py refined-b     # table-calibrated refined-RQ b_k(c), k = 1,2,3
 python3 reproduce.py tables        # w/b tables for k = 1, 2, 3
 python3 reproduce.py aux           # every non-paper artifact in results/
 ```
@@ -110,14 +112,15 @@ python3 scripts/plot_ratio_panels.py --panels twopanel --model-config configs/wo
 python3 scripts/plot_c_heatmap.py --model-config configs/workload_mm1m.json --no-show   # refined-RQ c on the same grid
 ```
 
-Effective-IDW overlay and table diagnostics:
+Effective-IDW and calibration diagnostics:
 
 ```bash
 python3 scripts/plot_idw_effective.py --config configs/effective_idw_h2m1m.json --no-show
+python3 scripts/plot_first_b.py --no-show       # first-RQ b_k(q), k = 1,2,3 -> results/first_rq_b_tripanel.pdf
+python3 scripts/plot_refined_b.py --no-show     # refined-RQ b_k(c), k = 1,2,3 -> results/refined_rq_b_tripanel.pdf
 python3 scripts/plot_w_tables.py overlay --k 2 --no-show
 python3 scripts/plot_w_tables.py b --k 2 --no-show
 python3 scripts/plot_w_tripanel.py --no-show   # w_{c,k}(t) tripanel, k = 1,2,3 -> results/w_tripanel.pdf
-python3 scripts/plot_b_overlay.py --no-show    # calibrated b(c) overlay, k = 1,2,3 -> results/b_overlay.pdf
 ```
 
 Single simulator runs (bypassing the grid drivers):
